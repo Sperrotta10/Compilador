@@ -10,7 +10,8 @@ TOKEN_PATTERNS = [
     ("EXCEPTION", r"\b(try|catch|throw)\b"),
     ("ACCESS_TOKEN", r"\b(public|private|protected)\b"),
     ("DATA_STRUCTURE", r"\b(array|list|set)\b"),
-    ("PRINT_STATEMENT", r"\b(print|println)\b"),
+    ("PRINT_STATEMENT", r"\b(System.out.print|System.out.println|System.out.printf)\b"),
+    ("STRING_LITERAL", r'"([^"\\]*(\\.[^"\\]*)*)"'),
     ("NUMBER", r"\b\d+(\.\d+)?\b"),
     ("IDENTIFIER", r"\b[a-zA-Z_][a-zA-Z0-9_]*\b"),
     ("ARITHMETIC_OPERATOR", r"[+\-*/%]"),
@@ -54,7 +55,9 @@ class PruebaJava {
     /* Comentario
     Multilinea*/
     public static void main() { 
-        println("Comienzo del ciclo");
+        System.out.println("Comienzo del ciclo");
+        System.out.printf("Nombre: %s | Edad: %d | Altura: %.2f metros%n", nombre, edad, altura);
+
         int x = 10;
         for(int i = 0; i < 10; i++) {
             // Esto es un comentario

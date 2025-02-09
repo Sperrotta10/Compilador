@@ -23,14 +23,16 @@ TOKEN_PATTERNS = [
     ("IDENTIFIER", r"\b[a-zA-Z_][a-zA-Z0-9_]*\b"),
 ]
 
+TOKEN_REGEX = [(name, re.compile(pattern)) for name, pattern in TOKEN_PATTERNS]
+
+
 def lexer(code):
     tokens = []
     position = 0
 
     while position < len(code):
         match = None
-        for token_type, pattern in TOKEN_PATTERNS:
-            regex = re.compile(pattern)
+        for token_type, regex in TOKEN_REGEX:
             match = regex.match(code, position)
 
             if match:

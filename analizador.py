@@ -28,7 +28,10 @@ TOKEN_PATTERNS = [
 TOKEN_REGEX = [(name, re.compile(pattern)) for name, pattern in TOKEN_PATTERNS] #Se compilan las expresiones regulares una sola vez antes del bucle
 
 
-def lexer(code):
+def lexer(ruta_archivo):
+    with open(ruta_archivo, 'r') as file:
+        code = file.read()  # Leemos el contenido del archivo
+
     tokens = []
     position = 0
 
@@ -49,38 +52,7 @@ def lexer(code):
     
     return tokens
 
-# Ejemplo de código fuente simple
-code = """
-public class EjemploPatterns {
-    public static void main(String[] args) {
-        // Variables
-        String nombre = "Juan";
-        int edad = 30;
-        double salario = 2500.75;
+# Llamamos a la función pasando la ruta del archivo Java
+ruta_archivo = 'Pruebas/Prueba_1.java'  
 
-        // Imprimir mensaje con printf
-        System.out.printf("Nombre: %s | Edad: %d | Salario: %.2f%n", nombre, edad, salario);
-
-        // Condicional
-        if (edad > 18) {
-            System.out.println("Mayor de edad");
-        } else {
-            System.out.println("Menor de edad");
-        }
-
-        // Bucle for
-        for (int i = 0; i < 3; i++) {
-            System.out.println("Contador: " + i);
-        }
-
-        // Comentarios
-        // Este es un comentario de una sola línea
-        /* Este es un comentario
-           de múltiples líneas */
-    }
-}
-
-
-
-"""
-print(lexer(code))
+print(lexer(ruta_archivo))

@@ -1,7 +1,6 @@
 public class EjemploPatterns {
     public static void main(String[] args) {
         // Variables
-        List<String> lista = new ArrayList<>();
         String nombre = "Juan";
         int edad = 30;
         double salario = 2500.75;

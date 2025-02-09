@@ -20,6 +20,8 @@ TOKEN_PATTERNS = [
     ("LOGICAL_OPERATOR", r"(&&|\|\||!)"),
     ("RELATIONAL_OPERATOR", r"(==|!=|<|>|<=|>=)"),
     ("DELIMITER", r"[;{}(),]"),
+    ("OPEN_BRACKET", r"\["),
+    ("CLOSE_BRACKET", r"\]"),
     ("NEWLINE", r"\n"),
     ("WHITESPACE", r"[ \t]+"),
     ("ERROR", r".")  # Captura cualquier carácter inesperado

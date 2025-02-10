@@ -3,15 +3,19 @@ from tkinter import scrolledtext, font, filedialog
 from analizador import lexer  
 
 def analyze_code():
+    output_text.config(state='normal')
     code = input_text.get("1.0", tk.END)  # Obtener el código del textfield
     try:
         tokens = lexer(code)  
         output_text.delete("1.0", tk.END)  
         for token_type, value in tokens:
             output_text.insert(tk.END, f"{token_type}: {value}\n")  
+        output_text.config(state='disabled')
     except SyntaxError as e:
         output_text.delete("1.0", tk.END)
+
         output_text.insert(tk.END, f"Error: {e}")
+
 
 def load_file():
     # Abrir un diálogo para seleccionar un archivo

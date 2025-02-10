@@ -3,7 +3,6 @@ import re
 # Definimos los patrones de tokens
 TOKEN_PATTERNS = [
     ("COMMENT", r"//.*|/\*[\s\S]*?\*/"),
-    ("KEYWORD", r"\b(class|public|private|protected|static|void|if|else|while|for|return|try|catch|throw)\b"),
     ("DATA_TYPE", r"\b(int|float|double|boolean|char|string)\b"),
     ("CONDITIONAL", r"\b(if|else)\b"),
     ("LOOP", r"\b(for|while)\b"),
@@ -13,6 +12,7 @@ TOKEN_PATTERNS = [
     ("PRINT_STATEMENT", r"\b(System.out.print|System.out.println|System.out.printf)\b"),
     ("STRING_LITERAL", r'"([^"\\]*(\\.[^"\\]*)*)"'),
     ("NUMBER", r"\b\d+(\.\d+)?\b"),
+    ("KEYWORD", r"\b(class|public|private|protected|static|void|if|else|while|for|return|try|catch|throw)\b"),
     ("IDENTIFIER", r"\b[a-zA-Z_][a-zA-Z0-9_]*\b"),
     ("ARITHMETIC_OPERATOR", r"[+\-*/%]"),
     ("ASSIGNMENT_OPERATOR", r"="),

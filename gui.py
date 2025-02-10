@@ -24,7 +24,7 @@ def load_file():
 
 #ventana principal
 root = tk.Tk()
-root.title("Analizador Léxico")
+root.title("Super Analizador Léxico")
 root.geometry("900x500") 
 root.configure(bg="#f0f0f0")  
 
@@ -40,10 +40,28 @@ input_label.grid(row=0, column=0, sticky="w", pady=(0, 5))
 input_text = scrolledtext.ScrolledText(main_frame, width=50, height=15, font=custom_font, wrap=tk.WORD)
 input_text.grid(row=1, column=0, padx=(0, 10), sticky="nsew")
 
-load_button = tk.Button(main_frame, text="Cargar Archivo", command=load_file, font=custom_font, bg="#2196F3", fg="white")
+load_button = tk.Button(
+    main_frame,
+    text="Cargar Archivo",
+    command=load_file,
+    font=("Arial", 12, "bold"),  
+    bg="#2196F3",  
+    fg="white",   
+    activebackground="#1976D2",  
+)
 load_button.grid(row=2, column=0, pady=5, sticky="ew")
 
-analyze_button = tk.Button(main_frame, text="Analizar", command=analyze_code, font=custom_font, bg="#4CAF50", fg="white")
+
+analyze_button = tk.Button(
+    main_frame,
+    text="Analizar",
+    command=analyze_code,
+    font=("Arial", 12, "bold"),  
+    bg="#4CAF50", 
+    fg="white",
+    activebackground="#3e8e41"   
+)
+
 analyze_button.grid(row=3, column=0, pady=10, sticky="ew")
 
 output_label = tk.Label(main_frame, text="Resultados del análisis:", font=custom_font, bg="#f0f0f0")

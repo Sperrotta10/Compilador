@@ -29,7 +29,7 @@ TOKEN_PATTERNS = [
 
 TOKEN_REGEX = [(name, re.compile(pattern)) for name, pattern in TOKEN_PATTERNS] #Se compilan las expresiones regulares una sola vez antes del bucle
 
-
+#Función para análisis del código
 def lexer(code):
     tokens = []
     position = 0

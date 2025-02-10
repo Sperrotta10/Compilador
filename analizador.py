@@ -30,10 +30,7 @@ TOKEN_PATTERNS = [
 TOKEN_REGEX = [(name, re.compile(pattern)) for name, pattern in TOKEN_PATTERNS] #Se compilan las expresiones regulares una sola vez antes del bucle
 
 
-def lexer(ruta_archivo):
-    with open(ruta_archivo, 'r') as file:
-        code = file.read()  # Leemos el contenido del archivo
-
+def lexer(code):
     tokens = []
     position = 0
 
@@ -51,10 +48,7 @@ def lexer(ruta_archivo):
 
         if not match:
             raise SyntaxError(f"Unexpected character {position}: {code[position]}")
-    
+    print(tokens)
     return tokens
 
-# Llamamos a la función pasando la ruta del archivo Java
-ruta_archivo = 'Pruebas/Prueba_1.java'  
 
-print(lexer(ruta_archivo))

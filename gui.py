@@ -5,12 +5,17 @@ from analizador import lexer
 def analyze_code():
     output_text.config(state='normal')
     code = input_text.get("1.0", tk.END)  # Obtener el código del textfield
+
     try:
         tokens = lexer(code)  
         output_text.delete("1.0", tk.END)  
+
+        output_text.insert(tk.END, f"{"Tipos de Tokens":<40}  {"Valores":<30}  {"posiciones":<10} \n")
         for token_type, value in tokens:
-            output_text.insert(tk.END, f"{token_type}: {value}\n")  
+            output_text.insert(tk.END, f"Token: {token_type:<33} Valor: {value:<26} Posición: {1:<6}\n")  
+
         output_text.config(state='disabled')
+
     except SyntaxError as e:
         output_text.delete("1.0", tk.END)
 
@@ -41,7 +46,7 @@ main_frame.pack(padx=10, pady=10, fill=tk.BOTH, expand=True)
 input_label = tk.Label(main_frame, text="Código Java:", font=custom_font, bg="#f0f0f0")
 input_label.grid(row=0, column=0, sticky="w", pady=(0, 5))
 
-input_text = scrolledtext.ScrolledText(main_frame, width=50, height=15, font=custom_font, wrap=tk.WORD)
+input_text = scrolledtext.ScrolledText(main_frame, width=50, height=15, font=("Consolas", 10), wrap=tk.WORD)
 input_text.grid(row=1, column=0, padx=(0, 10), sticky="nsew")
 
 load_button = tk.Button(
@@ -71,8 +76,9 @@ analyze_button.grid(row=3, column=0, pady=10, sticky="ew")
 output_label = tk.Label(main_frame, text="Resultados del análisis:", font=custom_font, bg="#f0f0f0")
 output_label.grid(row=0, column=1, sticky="w", pady=(0, 5))
 
-output_text = scrolledtext.ScrolledText(main_frame, width=50, height=15, font=custom_font, wrap=tk.WORD)
+output_text = scrolledtext.ScrolledText(main_frame, width=50, height=15, font=("Consolas", 10), wrap=tk.WORD)
 output_text.grid(row=1, column=1, sticky="nsew")
+output_text.config(state='disabled')
 
 main_frame.grid_rowconfigure(1, weight=1)
 main_frame.grid_columnconfigure(0, weight=1)

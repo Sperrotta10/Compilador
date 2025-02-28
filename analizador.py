@@ -33,21 +33,41 @@ TOKEN_REGEX = [(name, re.compile(pattern)) for name, pattern in TOKEN_PATTERNS] 
 def lexer(code):
     tokens = []
     position = 0
+    line = 1  # Iniciar en la línea 1
+    column = 1  # Iniciar en la columna 1
 
     while position < len(code):
         match = None
         for token_type, regex in TOKEN_REGEX:
             match = regex.match(code, position)
-
+            
             if match:
+
                 value = match.group(0)
-                if token_type != "WHITESPACE":  # Ignorar espacios
-                    tokens.append((token_type, value))
+                token_length = len(value)  # Longitud del token encontrado
+
+                if token_type != "WHITESPACE" and token_type != "Salto de Linea" and token_type != "Comentario":  # Ignorar espacios
+                    tokens.append((token_type, value, line, column))
+
+                # Actualizar la posición, línea y columna
                 position = match.end()
+                # Contar saltos de línea en el token
+                newlines = value.count("\n")
+                if newlines > 0:
+                    line += newlines
+                    column = len(value.split("\n")[-1]) + 1  # Columna después del salto
+                else:
+                    column += token_length
                 break
 
         if not match:
-            raise SyntaxError(f"Unexpected character {position}: {code[position]}")
+            # Carácter inválido encontrado
+            invalid_char = code[position]
+            raise SyntaxError(
+                f"Invalid character '{invalid_char}' at line {line}, column {column}. "
+                f"Expected a valid Java token."
+            )
+        
     print(tokens)
     return tokens
 

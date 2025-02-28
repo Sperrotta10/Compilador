@@ -10,9 +10,10 @@ def analyze_code():
         tokens = lexer(code)  
         output_text.delete("1.0", tk.END)  
 
-        output_text.insert(tk.END, f"{"Tipos de Tokens":<40}  {"Valores":<30}  {"posiciones":<10} \n")
-        for token_type, value in tokens:
-            output_text.insert(tk.END, f"Token: {token_type:<33} Valor: {value:<26} Posición: {1:<6}\n")  
+        output_text.insert(tk.END, f"{"Tipos de Tokens":<40}  {"Valores":<30}    {"posiciones":<10} \n")
+        output_text.insert(tk.END, f"{"-" * 90} \n")
+        for token_type, value, line, column in tokens:
+            output_text.insert(tk.END, f"Token: {token_type:<33} Valor: {value:<26} Posición: ({line},{column})\n")  
 
         output_text.config(state='disabled')
 
@@ -34,7 +35,7 @@ def load_file():
 #ventana principal
 root = tk.Tk()
 root.title("Super Analizador Léxico")
-root.geometry("900x500") 
+root.geometry("1000x600") 
 root.configure(bg="#f0f0f0")  
 
 # Fuente

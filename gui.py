@@ -22,9 +22,14 @@ def analyze_code():
 
         # Analisis sintactico
         parsear = Parser(tokens)
-        parsear.parse()
-        #ast = parsear.parse()
-        #print_ast(ast)
+        ast = parsear.parse()
+
+        # Mostrar AST en el GUI
+        output_text.config(state='normal')  # Habilitar para modificar
+        output_text.insert(tk.END, f"\n\nAST generado:\n{ast}")  # Imprimir AST en el área de salida
+        output_text.config(state='disabled')  # Deshabilitar para evitar cambios accidentales
+
+        print("Hola", ast)
 
     except SyntaxError as e:
         output_text.delete("1.0", tk.END)

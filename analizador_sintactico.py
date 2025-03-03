@@ -25,6 +25,10 @@ class Parser:
         """Verifica si el token actual es del tipo esperado y avanza al siguiente"""
         if self.current_token_index < len(self.tokens):
             token_type, token_value, _, _ = self.tokens[self.current_token_index]
+
+            # Imprimir el token actual para ver qué está siendo procesado
+            print(f"Procesando token {self.current_token_index}: {token_type}, {token_value}")
+
             if token_type == expected_type:
                 self.current_token_index += 1
                 return token_value
@@ -146,16 +150,47 @@ class Parser:
 
     def parse_sentencia_while(self):
         """Regla para una sentencia while: while (condición) { instrucciones }"""
-        self.eat("Bucle")  # while
-        self.eat("Delimitador")  # (
-        condicion = self.parse_expresion()  # Condición del while
-        self.eat("Delimitador")  # )
-        self.eat("Delimitador")  # {
-        instrucciones = self.parse_instrucciones()  # Instrucciones dentro del bloque while
-        self.eat("Delimitador")  # }
         
-        # Crear el nodo del bucle while
+        # Verificar si hay más tokens antes de acceder al siguiente
+        if self.current_token_index >= len(self.tokens):
+            raise SyntaxError("Se esperaba 'while', pero no hay más tokens.")
+        
+        # Verificar la palabra clave 'while'
+        token_type, token_value, _, _ = self.tokens[self.current_token_index]
+        if token_type != "Bucle" or token_value != "while":
+            raise SyntaxError(f"Se esperaba 'while', pero se encontró '{token_value}'.")
+        self.eat("Bucle")  # Consumir 'while'
+
+        # Verificar el delimitador '('
+        if self.current_token_index >= len(self.tokens) or self.tokens[self.current_token_index][0] != "Delimitador" or self.tokens[self.current_token_index][1] != "(":
+            raise SyntaxError("Se esperaba '(' después de 'while'.")
+        self.eat("Delimitador")  # Consumir '('
+
+        # Condición del while
+        condicion = self.parse_expresion()
+
+        # Verificar el delimitador ')'
+        if self.current_token_index >= len(self.tokens) or self.tokens[self.current_token_index][0] != "Delimitador" or self.tokens[self.current_token_index][1] != ")":
+            raise SyntaxError("Se esperaba ')' después de la condición.")
+        self.eat("Delimitador")  # Consumir ')'
+
+        # Verificar el delimitador de apertura del bloque '{'
+        if self.current_token_index >= len(self.tokens) or self.tokens[self.current_token_index][0] != "Delimitador" or self.tokens[self.current_token_index][1] != "{":
+            raise SyntaxError("Se esperaba '{' después de ')'.")
+        self.eat("Delimitador")  # Consumir '{'
+
+        # Instrucciones dentro del bloque while
+        instrucciones = self.parse_instrucciones()
+
+        # Verificar el delimitador de cierre del bloque '}'
+        if self.current_token_index >= len(self.tokens) or self.tokens[self.current_token_index][0] != "Delimitador" or self.tokens[self.current_token_index][1] != "}":
+            raise SyntaxError("Se esperaba '}' al final del bloque 'while'.")
+        self.eat("Delimitador")  # Consumir '}'
+
+        # Crear el nodo para el bucle while
         return ASTNode("Sentencia While", None, [condicion, instrucciones])
+
+
 
     def parse_instrucciones(self):
         """Analiza el código según las reglas definidas"""
@@ -194,15 +229,21 @@ class Parser:
             
     def parse(self):
         """Inicia el análisis sintáctico"""
-        ast = self.parse_instrucciones()
+        try:
+            ast = self.parse_instrucciones()
 
-        print("AST Generado:", ast)
-        
-        # Comprobamos si hemos procesado todos los tokens
-        if self.current_token_index < len(self.tokens):
-            raise SyntaxError(f"Token inesperado '{self.tokens[self.current_token_index][1]}' al final del código.")
-        
-        return ast  # Retornar el árbol de sintaxis abstracta
+            print("AST Generado:", ast)
+
+            # Comprobamos si hemos procesado todos los tokens
+            if self.current_token_index < len(self.tokens):
+                raise SyntaxError(f"Token inesperado '{self.tokens[self.current_token_index][1]}' al final del código.")
+
+            return ast  # Retornar el árbol de sintaxis abstracta
+
+        except SyntaxError as e:
+            print(f"Error de sintaxis: {e}")
+        except Exception as e:
+            print(f"Error inesperado: {e}")
 
 
 tokens = [('Tipo de dato', 'int', 1, 1), ('Identificador', 'x', 1, 5), ('Operador de Asignación', '=', 1, 7), ('Número', '5', 1, 9), ('Delimitador', ';', 1, 10), ('Condicional', 'if', 2, 1), ('Delimitador', '(', 2, 4), ('Identificador', 'x', 2, 5), ('Operador Relacional', '>', 2, 7), ('Número', '3', 2, 9), ('Delimitador', ')', 2, 10), ('Delimitador', '{', 2, 12), ('Identificador', 'x', 3, 5), ('Operador de Asignación', '=', 3, 7), ('Identificador', 'x', 3, 9), ('Operador Aritmético', '+', 3, 11), ('Número', '1', 3, 13), ('Delimitador', ';', 3, 14), ('Delimitador', '}', 4, 1), ('Bucle', 'while', 5, 1), ('Delimitador', '(', 5, 7), ('Identificador', 'x', 5, 8), ('Operador Relacional', '<', 5, 10), ('Número', '10', 5, 12), ('Delimitador', ')', 5, 14), ('Delimitador', '{', 5, 16), ('Identificador', 'x', 6, 5), ('Operador de Asignación', '=', 6, 7), ('Identificador', 'x', 6, 9), ('Operador Aritmético', '+', 6, 11), ('Número', '2', 6, 13), ('Delimitador', ';', 6, 14), ('Delimitador', '}', 7, 1)]

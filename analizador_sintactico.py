@@ -79,17 +79,70 @@ class Parser:
             raise SyntaxError("Error: No se encontraron más tokens para procesar.")
 
     def parse_sentencia_if(self):
-        """Regla para una sentencia if: if (condición) { instrucciones }"""
-        self.eat("Condicional")  # if
-        self.eat("Delimitador")  # (
-        condicion = self.parse_expresion()  # Condición de la sentencia if
-        self.eat("Delimitador")  # )
-        self.eat("Delimitador")  # {
-        instrucciones = self.parse_instrucciones()  # Instrucciones dentro del bloque if
-        self.eat("Delimitador")  # }
+        """Analiza una sentencia 'if' con su bloque de instrucciones y opcionales 'else' o 'else if'."""
         
-        # Crear el nodo de la sentencia if
-        return ASTNode("Sentencia If", None, [condicion, instrucciones])
+        if self.current_token_index >= len(self.tokens):
+            raise SyntaxError("Se esperaba 'if', pero no hay más tokens.")
+        
+        token_type, token_value, _, _ = self.tokens[self.current_token_index]
+        if token_type != "Condicional" or token_value != "if":
+            raise SyntaxError(f"Se esperaba 'if', pero se encontró '{token_value}'.")
+        
+        self.eat("Condicional")  # Consumimos el 'if'
+
+        # 1. Verificamos el paréntesis de apertura '('
+        if self.tokens[self.current_token_index][0] != "Delimitador" or self.tokens[self.current_token_index][1] != "(":
+            raise SyntaxError("Se esperaba '(' después de 'if'.")
+        self.eat("Delimitador")  # Consumimos '('
+
+        # 2. Expresión condicional dentro del 'if'
+        expresion = self.parse_expresion()
+
+        # 3. Verificamos el paréntesis de cierre ')'
+        if self.tokens[self.current_token_index][0] != "Delimitador" or self.tokens[self.current_token_index][1] != ")":
+            raise SyntaxError("Se esperaba ')' después de la expresión condicional.")
+        self.eat("Delimitador")  # Consumimos ')'
+
+        # 4. Verificamos el delimitador de apertura de bloque '{'
+        if self.tokens[self.current_token_index][0] != "Delimitador" or self.tokens[self.current_token_index][1] != "{":
+            raise SyntaxError("Se esperaba '{' después de ')'.")
+        self.eat("Delimitador")  # Consumimos '{'
+
+        # 5. Instrucciones dentro del bloque 'if'
+        instrucciones = self.parse_instrucciones()  # Parseamos las instrucciones dentro del bloque
+
+        # 6. Verificamos el delimitador de cierre de bloque '}'
+        if self.tokens[self.current_token_index][0] != "Delimitador" or self.tokens[self.current_token_index][1] != "}":
+            raise SyntaxError("Se esperaba '}' al final del bloque 'if'.")
+        self.eat("Delimitador")  # Consumimos '}'
+
+        # 7. Opcional: Verificamos la existencia de un 'else'
+        if self.current_token_index < len(self.tokens):
+            token_type, token_value, _, _ = self.tokens[self.current_token_index]
+            
+            if token_type == "Condicional" and token_value == "else":
+                self.eat("Condicional")  # Consumimos 'else'
+                
+                # Verificamos el delimitador de apertura de bloque '{'
+                if self.tokens[self.current_token_index][0] != "Delimitador" or self.tokens[self.current_token_index][1] != "{":
+                    raise SyntaxError("Se esperaba '{' después de 'else'.")
+                self.eat("Delimitador")  # Consumimos '{'
+                
+                instrucciones_else = self.parse_instrucciones()  # Parseamos las instrucciones del 'else'
+                
+                # Verificamos el delimitador de cierre de bloque '}'
+                if self.tokens[self.current_token_index][0] != "Delimitador" or self.tokens[self.current_token_index][1] != "}":
+                    raise SyntaxError("Se esperaba '}' al final del bloque 'else'.")
+                self.eat("Delimitador")  # Consumimos '}'
+                
+                return ASTNode("IfElse", expresion, [instrucciones, instrucciones_else])
+
+            # Opcional: Verificamos el caso de 'else if'
+            elif token_type == "Condicional" and token_value == "else if":
+                return self.parse_sentencia_if()  # Recurre y analiza el 'else if' como un nuevo 'if'
+        
+        return ASTNode("If", expresion, instrucciones)
+
 
     def parse_sentencia_while(self):
         """Regla para una sentencia while: while (condición) { instrucciones }"""

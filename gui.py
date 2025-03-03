@@ -1,12 +1,15 @@
 import tkinter as tk
 from tkinter import scrolledtext, font, filedialog
-from analizador import lexer  
+from analizador_lexico import lexer  
+from analizador_sintactico import Parser
 
 def analyze_code():
     output_text.config(state='normal')
     code = input_text.get("1.0", tk.END)  # Obtener el código del textfield
 
     try:
+
+        # Analisis Lexico
         tokens = lexer(code)  
         output_text.delete("1.0", tk.END)  
 
@@ -16,6 +19,12 @@ def analyze_code():
             output_text.insert(tk.END, f"Token: {token_type:<33} Valor: {value:<26} Posición: ({line},{column})\n")  
 
         output_text.config(state='disabled')
+
+        # Analisis sintactico
+        parsear = Parser(tokens)
+        parsear.parse()
+        #ast = parsear.parse()
+        #print_ast(ast)
 
     except SyntaxError as e:
         output_text.delete("1.0", tk.END)
@@ -32,10 +41,12 @@ def load_file():
             input_text.delete("1.0", tk.END)  
             input_text.insert(tk.END, code) 
 
+
 #ventana principal
 root = tk.Tk()
 root.title("Super Analizador Léxico")
-root.geometry("1000x600") 
+root.geometry("1400x600") 
+root.geometry("1400x600+70+100")
 root.configure(bg="#f0f0f0")  
 
 # Fuente

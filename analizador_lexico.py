@@ -14,7 +14,7 @@ TOKEN_PATTERNS = [
     ("Número", r"\b\d+(\.\d+)?\b"),
     ("Palabra Reservada", r"\b(class|public|private|protected|static|void|if|else|while|for|return|try|catch|throw)\b"),
     ("Identificador", r"\b[a-zA-Z_][a-zA-Z0-9_]*\b"),
-    ("Operador Artimético", r"[+\-*/%]"),
+    ("Operador Aritmético", r"[+\-*/%]"),
     ("Operador de Asignación", r"="),
     ("Operador Compuesto", r"(\+=|-=|\*=|/=)"),
     ("Operador Lógico", r"(&&|\|\||!)"),

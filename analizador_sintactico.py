@@ -182,6 +182,9 @@ class Parser:
         # Instrucciones dentro del bloque while
         instrucciones = self.parse_instrucciones()
 
+        print("Tokens restantes:", self.tokens[self.current_token_index:])
+        print(f"Índice actual: {self.current_token_index}, Token actual: {self.tokens[self.current_token_index] if self.current_token_index < len(self.tokens) else 'EOF'}")
+
         # Verificar el delimitador de cierre del bloque '}'
         if self.current_token_index >= len(self.tokens) or self.tokens[self.current_token_index][0] != "Delimitador" or self.tokens[self.current_token_index][1] != "}":
             raise SyntaxError("Se esperaba '}' al final del bloque 'while'.")
@@ -193,11 +196,15 @@ class Parser:
 
 
     def parse_instrucciones(self):
-        """Analiza el código según las reglas definidas"""
+        """Analiza las instrucciones dentro del bloque."""
         instrucciones = []
         while self.current_token_index < len(self.tokens):
             token_type, token_value, _, _ = self.tokens[self.current_token_index]
             print(token_type)
+            
+            # Verifica si es el cierre de bloque
+            if token_type == "Delimitador" and token_value == "}":
+                break  # Detiene el bucle si encuentra un '}'
             
             # Primero se verifican las sentencias como declaraciones o condicionales
             if token_type == "Tipo de dato":
@@ -207,17 +214,12 @@ class Parser:
             elif token_type == "Bucle":
                 instrucciones.append(self.parse_sentencia_while())  # Sentencia while
             elif token_type == "Identificador":  # Esto debería ser parte de una expresión o asignación
-                # Asegurarse de no confundir asignación con expresión
                 if self.tokens[self.current_token_index + 1][0] == "Operador de Asignación":
-                    # Si el siguiente token es un operador de asignación, procesamos la asignación
-                    instrucciones.append(self.parse_expresion())  # Aquí puede ir la lógica de asignación
+                    instrucciones.append(self.parse_expresion())  # Lógica de asignación
                 else:
-                    # Si no es asignación, se trata como una expresión
-                    instrucciones.append(self.parse_expresion())  
-            elif token_type == "Delimitador":
-                # Si encontramos un delimitador, simplemente avanzamos al siguiente token
-                # Para manejar el caso cuando llegamos al final de una instrucción
-                self.eat("Delimitador")
+                    instrucciones.append(self.parse_expresion())  # Lógica de expresión
+            elif token_type == "Delimitador" and token_value != "}":
+                self.eat("Delimitador")  # Avanza si no es el final del bloque
             else:
                 raise SyntaxError(f"Token inesperado '{token_type}'")
         

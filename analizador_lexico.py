@@ -5,7 +5,7 @@ TOKEN_PATTERNS = [
     ("Comentario", r"//.*|/\*[\s\S]*?\*/"),
     ("Tipo de dato", r"\b(int|float|double|boolean|char|string|String)\b"),
     ("Condicional", r"\b(if|else)\b"),
-    ("Bucle", r"\b(for|while)\b"),
+    ("Bucle", r"\b(for|while|do)\b"),
     ("Excepción", r"\b(try|catch|throw)\b"),
     ("Token de Acceso", r"\b(public|private|protected)\b"),
     ("Estructura de Datos", r"\b(array|list|set)\b"),

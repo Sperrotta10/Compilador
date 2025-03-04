@@ -609,6 +609,55 @@ class Parser:
 
         # Crear el nodo para la sentencia switch
         return ASTNode("Switch", None, [expresion, casos, default_case])
+    
+
+    def parse_declaracion_clase(self):
+        """Regla para una declaración de clase: class NombreClase { ... }"""
+        
+        # Verificar la palabra clave 'class'
+        if self.current_token_index >= len(self.tokens):
+            raise SyntaxError("Se esperaba 'class', pero no hay más tokens.")
+        
+        token_type, token_value, _, _ = self.tokens[self.current_token_index]
+        if token_type != "PalabraClave" or token_value != "class":
+            raise SyntaxError(f"Se esperaba 'class', pero se encontró '{token_value}'.")
+        self.eat("PalabraClave")  # Consumir 'class'
+
+        # Nombre de la clase
+        nombre_clase = self.eat("Identificador")  # Consumir el nombre de la clase
+
+        # Verificar el delimitador de apertura del bloque '{'
+        if self.tokens[self.current_token_index][0] != "Delimitador" or self.tokens[self.current_token_index][1] != "{":
+            raise SyntaxError("Se esperaba '{' después del nombre de la clase.")
+        self.eat("Delimitador")  # Consumir '{'
+
+        # Atributos y métodos de la clase
+        miembros = []
+        while self.current_token_index < len(self.tokens):
+            token_type, token_value, _, _ = self.tokens[self.current_token_index]
+            
+            # Verificar si es un atributo (declaración de variable)
+            if token_type == "Tipo de dato":
+                miembros.append(self.parse_declaracion_variable())  # Atributo
+            
+            # Verificar si es un método (declaración de función)
+            elif token_type == "Tipo de dato" or token_type == "PalabraClave" and token_value == "void":
+                miembros.append(self.parse_declaracion_funcion())  # Método
+            
+            # Verificar el delimitador de cierre del bloque '}'
+            elif token_type == "Delimitador" and token_value == "}":
+                break  # Salir del bucle
+            
+            else:
+                raise SyntaxError(f"Token inesperado '{token_value}' en la clase.")
+
+        # Verificar el delimitador de cierre del bloque '}'
+        if self.tokens[self.current_token_index][0] != "Delimitador" or self.tokens[self.current_token_index][1] != "}":
+            raise SyntaxError("Se esperaba '}' al final de la clase.")
+        self.eat("Delimitador")  # Consumir '}'
+
+        # Crear el nodo para la declaración de la clase
+        return ASTNode("Clase", None, [nombre_clase, miembros])
 
 
     def parse_instrucciones(self):

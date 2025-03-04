@@ -3,27 +3,31 @@ import re
 # Definimos los patrones de tokens
 TOKEN_PATTERNS = [
     ("Comentario", r"//.*|/\*[\s\S]*?\*/"),
-    ("Tipo de dato", r"\b(int|float|double|boolean|char|string|String)\b"),
+    ("Tipo de dato", r"\b(int|float|double|boolean|char|string|String|long|short|byte)\b"),
     ("Condicional", r"\b(if|else)\b"),
     ("Bucle", r"\b(for|while|do)\b"),
-    ("Excepción", r"\b(try|catch|throw)\b"),
-    ("Token de Acceso", r"\b(public|private|protected)\b"),
-    ("Estructura de Datos", r"\b(array|list|set)\b"),
+    ("Excepción", r"\b(try|catch|throw|finally)\b"),
+    ("Token de Acceso", r"\b(public|private|protected|static|final|abstract)\b"),
+    ("Estructura de Datos", r"\b(array|list|set|map|queue|stack)\b"),
     ("Imprimir", r"\b(System.out.print|System.out.println|System.out.printf)\b"),
     ("String Literal", r'"([^"\\]*(\\.[^"\\]*)*)"'),
-    ("Número", r"\b\d+(\.\d+)?\b"),
-    ("Palabra Reservada", r"\b(class|public|private|protected|static|void|if|else|while|for|return|try|catch|throw)\b"),
+    ("Número", r"\b\d+(\.\d+)?(e[+-]?\d+)?\b"),  # Incluye notación científica
+    ("Palabra Reservada", r"\b(class|void|return|new|this|super|instanceof|switch|case|default|break|continue)\b"),
     ("Identificador", r"\b[a-zA-Z_][a-zA-Z0-9_]*\b"),
     ("Operador Aritmético", r"[+\-*/%]"),
     ("Operador de Asignación", r"="),
-    ("Operador Compuesto", r"(\+=|-=|\*=|/=)"),
+    ("Operador Compuesto", r"(\+=|-=|\*=|/=|%=|&=|\|=|\^=|<<=|>>=|>>>=)"),
     ("Operador Lógico", r"(&&|\|\||!)"),
     ("Operador Relacional", r"(==|!=|<|>|<=|>=)"),
+    ("Operador de Incremento/Decremento", r"(\+\+|--)"),
+    ("Operador de Bits", r"(&|\||\^|~|<<|>>|>>>)"),
     ("Delimitador", r"[;{}(),]"),
     ("Corchete Abierto", r"\["),
     ("Corchete Cerrado", r"\]"),
     ("Salto de Linea", r"\n"),
     ("WHITESPACE", r"[ \t]+"),
+    ("Literal Booleano", r"\b(true|false)\b"),
+    ("Literal Nulo", r"\b(null)\b"),
     ("ERROR", r".")  # Captura cualquier carácter inesperado
 ]
 

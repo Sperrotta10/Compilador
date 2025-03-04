@@ -661,7 +661,7 @@ class Parser:
 
 
     def parse_instrucciones(self):
-        """Analiza las instrucciones dentro del bloque."""
+        """Analiza las instrucciones dentro de un bloque."""
         instrucciones = []
         while self.current_token_index < len(self.tokens):
             token_type, token_value, _, _ = self.tokens[self.current_token_index]
@@ -670,22 +670,56 @@ class Parser:
             if token_type == "Delimitador" and token_value == "}":
                 break  # Detiene el bucle si encuentra un '}'
             
-            # Primero se verifican las sentencias como declaraciones o condicionales
+            # 1. Declaración de variable
             if token_type == "Tipo de dato":
                 instrucciones.append(self.parse_declaracion_variable())  # Declaración de variable
-            elif token_type == "Condicional":
+            
+            # 2. Sentencia if
+            elif token_type == "Condicional" and token_value == "if":
                 instrucciones.append(self.parse_sentencia_if())  # Sentencia if
-            elif token_type == "Bucle":
+            
+            # 3. Sentencia while
+            elif token_type == "Bucle" and token_value == "while":
                 instrucciones.append(self.parse_sentencia_while())  # Sentencia while
-            elif token_type == "Identificador":  # Esto debería ser parte de una expresión o asignación
-                if self.tokens[self.current_token_index + 1][0] == "Operador de Asignación":
-                    instrucciones.append(self.parse_expresion())  # Lógica de asignación
+            
+            # 4. Sentencia do-while
+            elif token_type == "Bucle" and token_value == "do":
+                instrucciones.append(self.parse_sentencia_do_while())  # Sentencia do-while
+            
+            # 5. Sentencia for
+            elif token_type == "Bucle" and token_value == "for":
+                instrucciones.append(self.parse_sentencia_for())  # Sentencia for
+            
+            # 6. Sentencia try-catch
+            elif token_type == "PalabraClave" and token_value == "try":
+                instrucciones.append(self.parse_sentencia_try_catch())  # Sentencia try-catch
+            
+            # 7. Sentencia switch
+            elif token_type == "PalabraClave" and token_value == "switch":
+                instrucciones.append(self.parse_sentencia_switch())  # Sentencia switch
+            
+            # 8. Declaración de función
+            elif token_type == "Tipo de dato" or (token_type == "PalabraClave" and token_value == "void"):
+                instrucciones.append(self.parse_declaracion_funcion())  # Declaración de función
+            
+            # 9. Declaración de clase
+            elif token_type == "PalabraClave" and token_value == "class":
+                instrucciones.append(self.parse_declaracion_clase())  # Declaración de clase
+            
+            # 10. Expresión o asignación
+            elif token_type == "Identificador":
+                if self.current_token_index + 1 < len(self.tokens) and self.tokens[self.current_token_index + 1][0] == "Operador de Asignación":
+                    instrucciones.append(self.parse_expresion())  # Asignación
                 else:
-                    instrucciones.append(self.parse_expresion())  # Lógica de expresión
-            elif token_type == "Delimitador" and token_value != "}":
-                self.eat("Delimitador")  # Avanza si no es el final del bloque
+                    instrucciones.append(self.parse_expresion())  # Expresión
+            
+            # 11. Delimitador (punto y coma)
+            elif token_type == "Delimitador" and token_value == ";":
+                self.eat("Delimitador")  # Consumir ';' (instrucción vacía)
+            
+            # 12. Token inesperado
             else:
-                raise SyntaxError(f"Token inesperado '{token_type}'")
+                raise SyntaxError(f"Token inesperado '{token_type}: {token_value}'")
         
         # Crear el nodo para el bloque de instrucciones
         return ASTNode("Bloque", None, instrucciones)

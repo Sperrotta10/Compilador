@@ -522,6 +522,93 @@ class Parser:
 
         # Crear el nodo para la sentencia try-catch
         return ASTNode("TryCatch", None, [instrucciones_try, (tipo_excepcion, nombre_excepcion), instrucciones_catch])
+    
+    def parse_sentencia_switch(self):
+        """Regla para una sentencia switch: switch (expresión) { case valor: ... break; default: ... }"""
+        
+        # Verificar la palabra clave 'switch'
+        if self.current_token_index >= len(self.tokens):
+            raise SyntaxError("Se esperaba 'switch', pero no hay más tokens.")
+        
+        token_type, token_value, _, _ = self.tokens[self.current_token_index]
+        if token_type != "PalabraClave" or token_value != "switch":
+            raise SyntaxError(f"Se esperaba 'switch', pero se encontró '{token_value}'.")
+        self.eat("PalabraClave")  # Consumir 'switch'
+
+        # Verificar el delimitador '('
+        if self.tokens[self.current_token_index][0] != "Delimitador" or self.tokens[self.current_token_index][1] != "(":
+            raise SyntaxError("Se esperaba '(' después de 'switch'.")
+        self.eat("Delimitador")  # Consumir '('
+
+        # Expresión del switch
+        expresion = self.parse_expresion()
+
+        # Verificar el delimitador ')'
+        if self.tokens[self.current_token_index][0] != "Delimitador" or self.tokens[self.current_token_index][1] != ")":
+            raise SyntaxError("Se esperaba ')' después de la expresión.")
+        self.eat("Delimitador")  # Consumir ')'
+
+        # Verificar el delimitador de apertura del bloque '{'
+        if self.tokens[self.current_token_index][0] != "Delimitador" or self.tokens[self.current_token_index][1] != "{":
+            raise SyntaxError("Se esperaba '{' después de 'switch'.")
+        self.eat("Delimitador")  # Consumir '{'
+
+        # Casos del switch
+        casos = []
+        default_case = None
+
+        while self.current_token_index < len(self.tokens):
+            token_type, token_value, _, _ = self.tokens[self.current_token_index]
+            
+            # Verificar si es un caso
+            if token_type == "PalabraClave" and token_value == "case":
+                self.eat("PalabraClave")  # Consumir 'case'
+                
+                # Valor del caso
+                valor = self.parse_expresion()
+
+                # Verificar el delimitador ':'
+                if self.tokens[self.current_token_index][0] != "Delimitador" or self.tokens[self.current_token_index][1] != ":":
+                    raise SyntaxError("Se esperaba ':' después del valor del caso.")
+                self.eat("Delimitador")  # Consumir ':'
+
+                # Instrucciones del caso
+                instrucciones = self.parse_instrucciones()
+
+                # Verificar la palabra clave 'break'
+                if self.tokens[self.current_token_index][0] == "PalabraClave" and self.tokens[self.current_token_index][1] == "break":
+                    self.eat("PalabraClave")  # Consumir 'break'
+                    self.eat("Delimitador")  # Consumir ';'
+
+                # Agregar el caso a la lista
+                casos.append((valor, instrucciones))
+            
+            # Verificar si es el caso por defecto
+            elif token_type == "PalabraClave" and token_value == "default":
+                self.eat("PalabraClave")  # Consumir 'default'
+
+                # Verificar el delimitador ':'
+                if self.tokens[self.current_token_index][0] != "Delimitador" or self.tokens[self.current_token_index][1] != ":":
+                    raise SyntaxError("Se esperaba ':' después de 'default'.")
+                self.eat("Delimitador")  # Consumir ':'
+
+                # Instrucciones del caso por defecto
+                default_case = self.parse_instrucciones()
+            
+            # Verificar el delimitador de cierre del bloque '}'
+            elif token_type == "Delimitador" and token_value == "}":
+                break  # Salir del bucle
+            
+            else:
+                raise SyntaxError(f"Token inesperado '{token_value}' en el switch.")
+
+        # Verificar el delimitador de cierre del bloque '}'
+        if self.tokens[self.current_token_index][0] != "Delimitador" or self.tokens[self.current_token_index][1] != "}":
+            raise SyntaxError("Se esperaba '}' al final del bloque 'switch'.")
+        self.eat("Delimitador")  # Consumir '}'
+
+        # Crear el nodo para la sentencia switch
+        return ASTNode("Switch", None, [expresion, casos, default_case])
 
 
     def parse_instrucciones(self):

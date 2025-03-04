@@ -159,16 +159,47 @@ class Parser:
         return ASTNode("Expresion", izquierda, [])
 
 
-    def parse_declaracion_variable(self, modificadores):
+    def parse_declaracion_variable(self, modificadores=None):
         """Regla para una declaración de variable en Java: [modificadores] Tipo Identificador = Valor ;"""
+
+        if modificadores is None:
+            modificadores = []  # Si no se proporcionan modificadores, usar una lista vacía
+
         if self.current_token_index < len(self.tokens):
-            token_type, _, _, _ = self.tokens[self.current_token_index]
-            if token_type == "Tipo de dato":
-                tipo_dato = self.eat("Tipo de dato")  # Tipo de dato (int, float, etc.)
-                identificador = self.eat("Identificador")  # Nombre de la variable
+
+            token_type, token_value, _, _ = self.tokens[self.current_token_index]
+
+             # Si el token es un modificador, consumirlo y continuar
+            while token_type == "Token de Acceso" or token_type == "Palabra Reservada":
+                if token_value in ["public", "private", "protected", "static", "final"]:
+                    modificadores.append(token_value)
+                    self.eat(token_type)  # Consumir el modificador
+                else:
+                    break  # Salir del bucle si no es un modificador válido
+                
+                # Actualizar el token actual
+                if self.current_token_index < len(self.tokens):
+                    token_type, token_value, _, _ = self.tokens[self.current_token_index]
+                else:
+                    break
+
+            if token_type == "Tipo de dato" or token_value == "void":
+
+                if token_value != "void":
+                    tipo_dato = self.eat("Tipo de dato")  # Tipo de dato (int, float, etc.)
+                    identificador = self.eat("Identificador")  # Nombre de la variable
+                else:
+                    tipo_dato = self.eat("Palabra Reservada")  # variable de retorno (void.)
+                    identificador = self.eat("Identificador")  # Nombre de la variable
+
+                # Verificar si hay una asignación
+                valor = None
+                operador_asignacion = None  # Inicializar la variable
+
                 if self.tokens[self.current_token_index][0] == "Operador de Asignación":
                     operador_asignacion = self.eat("Operador de Asignación")  # Operador '='
                     valor = self.parse_expresion()
+
                 self.eat("Delimitador")  # Punto y coma ';'
                 
                 # Crear el nodo de la declaración de la variable con el operador de asignación y los modificadores

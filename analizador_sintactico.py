@@ -19,15 +19,15 @@ class ASTNode:
     def graficar(self, parent_id=None, node_count=0, nodes=[], edges=[], level=0):
         node_id = node_count
         nodes.append((node_id, f"{self.tipo}: {str(self.valor)}"))
-        
+
         if parent_id is not None:
             edges.append((parent_id, node_id))
-        
+
         node_count += 1
-        
+
         if not isinstance(self.hijos, list):
             self.hijos = [self.hijos]
-        
+
         for hijo in self.hijos:
             if isinstance(hijo, ASTNode):
                 node_count = hijo.graficar(parent_id=node_id, node_count=node_count, nodes=nodes, edges=edges, level=level + 1)
@@ -35,7 +35,7 @@ class ASTNode:
                 nodes.append((node_count, f"Valor: {hijo}"))
                 edges.append((node_id, node_count))
                 node_count += 1
-        
+
         return node_count
 
     def graficar_mpl(self, output_filename="arbol_sintactico.png"):
@@ -44,7 +44,7 @@ class ASTNode:
         self.graficar(node_count=0, nodes=nodes, edges=edges)
 
         G = nx.DiGraph()
-        
+
         # Añadir los nodos
         for node_id, label in nodes:
             G.add_node(node_id, label=label)
@@ -56,12 +56,12 @@ class ASTNode:
         pos = self.crear_layout_arbol(G, nodes, edges)
 
         labels = nx.get_node_attributes(G, 'label')
-        
+
         plt.figure(figsize=(12, 10))  # Ajustar el tamaño de la figura
         nx.draw(G, pos, with_labels=True, labels=labels, node_size=4000, node_color='lightblue', font_size=9, font_weight='bold', arrows=True)
-        
+
         plt.title("Árbol Sintáctico Abstracto")
-        
+
         # Guardar la imagen
         plt.savefig(output_filename, format="PNG")
         plt.show()
@@ -69,36 +69,42 @@ class ASTNode:
 
     def crear_layout_arbol(self, G, nodes, edges):
         pos = {}
-        vertical_spacing = 2  # Aumentar el espaciado vertical
-        level_widths = self.calcular_anchos_por_nivel(nodes, edges)
-        
-        y_offset = 0
-        for level, width in enumerate(level_widths):
-            x_spacing = 9000  # Aumentar el espaciado horizontal
-            x_offset = - (width * x_spacing) / 2
-            for node_id, label in nodes:
-                if self.obtener_nivel(node_id, edges) == level:
-                    pos[node_id] = (x_offset, y_offset)
-                    x_offset += x_spacing
-            y_offset += vertical_spacing  # Aumentar el desplazamiento vertical
-        
-        return pos
-    
-    def calcular_anchos_por_nivel(self, nodes, edges):
         levels = {}
         for node_id, label in nodes:
             level = self.obtener_nivel(node_id, edges)
             if level not in levels:
-                levels[level] = 0
-            levels[level] += 1
-        
-        return [levels.get(i, 0) for i in range(max(levels.keys()) + 1)]
+                levels[level] = []
+            levels[level].append(node_id)
+
+        max_level = max(levels.keys()) if levels else 0
+        vertical_spacing = 1  # Espaciado vertical entre niveles
+
+        for level in range(max_level + 1):
+            if level not in levels:
+                continue
+
+            horizontal_spacing = 2  # Espaciado horizontal entre nodos en el mismo nivel
+            level_width = len(levels[level]) * horizontal_spacing
+            x_start = -level_width / 2  # Centrar los nodos en el nivel
+
+            for i, node_id in enumerate(levels[level]):
+                x = x_start + i * horizontal_spacing
+                y = -level * vertical_spacing
+                pos[node_id] = (x, y)
+
+        return pos
 
     def obtener_nivel(self, node_id, edges):
+        parent = self.obtener_padre(node_id, edges)
+        if parent is None:
+            return 0  # Nodo raíz
+        return self.obtener_nivel(parent, edges) + 1
+
+    def obtener_padre(self, node_id, edges):
         for start, end in edges:
-            if start == node_id:
-                return self.obtener_nivel(end, edges) + 1
-        return 0  # Es el nodo raíz
+            if end == node_id:
+                return start
+        return None  # Es el nodo raíz
 
 
 
@@ -235,7 +241,7 @@ class Parser:
             elif token_type == "Condicional" and token_value == "else if":
                 return self.parse_sentencia_if()  # Recurre y analiza el 'else if' como un nuevo 'if'
         
-        return ASTNode("If", expresion, instrucciones)
+        return ASTNode("If", None, [expresion, instrucciones])
 
 
     def parse_sentencia_while(self):

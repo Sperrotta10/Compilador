@@ -65,7 +65,7 @@ class ASTNode:
 
         # Guardar la imagen
         plt.savefig(output_filename, format="PNG")
-        plt.show()
+        #plt.show()
         print(f"Árbol guardado como imagen: {output_filename}")
 
 
@@ -404,7 +404,29 @@ class Parser:
     
 
     def parse_declaracion_funcion(self):
-        """Regla para una declaración de función: tipo_retorno nombre_funcion(parámetros) { ... }"""
+        """Regla para una declaración de función: [modificadores] tipo_retorno nombre_funcion(parámetros) { ... }"""
+        
+        # Lista para almacenar los modificadores
+        modificadores = []
+        
+        # Verificar modificadores (public, private, protected, static, final, abstract)
+        while self.current_token_index < len(self.tokens):
+            token_type, token_value, _, _ = self.tokens[self.current_token_index]
+            
+            if token_type == "Token de Acceso" or token_type == "Palabra Reservada":
+                if token_value in ["public", "private", "protected", "static", "final", "abstract"]:
+                    modificadores.append(token_value)
+                    self.eat(token_type)  # Consumir el modificador
+                else:
+                    break  # Salir del bucle si no es un modificador válido
+            else:
+                break  # Salir del bucle si no es un modificador
+        
+        # Validar combinaciones inválidas de modificadores
+        if "abstract" in modificadores and "final" in modificadores:
+            raise SyntaxError("Error: Un método no puede ser 'abstract' y 'final' al mismo tiempo.")
+        if "abstract" in modificadores and "static" in modificadores:
+            raise SyntaxError("Error: Un método no puede ser 'abstract' y 'static' al mismo tiempo.")
         
         # Verificar el tipo de retorno
         if self.current_token_index >= len(self.tokens):
@@ -455,7 +477,7 @@ class Parser:
         self.eat("Delimitador")  # Consumir '}'
 
         # Crear el nodo para la declaración de la función
-        return ASTNode("Funcion", tipo_retorno, [nombre_funcion, parametros, instrucciones])
+        return ASTNode("Funcion", tipo_retorno, [modificadores, nombre_funcion, parametros, instrucciones])
     
 
     def parse_sentencia_try_catch(self):

@@ -288,7 +288,62 @@ class Parser:
 
         # Crear el nodo para el bucle while
         return ASTNode("While", None, [condicion, instrucciones])
+    
 
+    def parse_sentencia_do_while(self):
+        """Regla para una sentencia do-while: do { instrucciones } while (condición);"""
+        
+        # Verificar la palabra clave 'do'
+        if self.current_token_index >= len(self.tokens):
+            raise SyntaxError("Se esperaba 'do', pero no hay más tokens.")
+        
+        token_type, token_value, _, _ = self.tokens[self.current_token_index]
+        if token_type != "Bucle" or token_value != "do":
+            raise SyntaxError(f"Se esperaba 'do', pero se encontró '{token_value}'.")
+        self.eat("Bucle")  # Consumir 'do'
+
+        # Verificar el delimitador de apertura del bloque '{'
+        if self.tokens[self.current_token_index][0] != "Delimitador" or self.tokens[self.current_token_index][1] != "{":
+            raise SyntaxError("Se esperaba '{' después de 'do'.")
+        self.eat("Delimitador")  # Consumir '{'
+
+        # Instrucciones dentro del bloque do
+        instrucciones = self.parse_instrucciones()
+
+        # Verificar el delimitador de cierre del bloque '}'
+        if self.tokens[self.current_token_index][0] != "Delimitador" or self.tokens[self.current_token_index][1] != "}":
+            raise SyntaxError("Se esperaba '}' al final del bloque 'do'.")
+        self.eat("Delimitador")  # Consumir '}'
+
+        # Verificar la palabra clave 'while'
+        if self.current_token_index >= len(self.tokens):
+            raise SyntaxError("Se esperaba 'while', pero no hay más tokens.")
+        
+        token_type, token_value, _, _ = self.tokens[self.current_token_index]
+        if token_type != "Bucle" or token_value != "while":
+            raise SyntaxError(f"Se esperaba 'while', pero se encontró '{token_value}'.")
+        self.eat("Bucle")  # Consumir 'while'
+
+        # Verificar el delimitador '('
+        if self.tokens[self.current_token_index][0] != "Delimitador" or self.tokens[self.current_token_index][1] != "(":
+            raise SyntaxError("Se esperaba '(' después de 'while'.")
+        self.eat("Delimitador")  # Consumir '('
+
+        # Condición del while
+        condicion = self.parse_expresion()
+
+        # Verificar el delimitador ')'
+        if self.tokens[self.current_token_index][0] != "Delimitador" or self.tokens[self.current_token_index][1] != ")":
+            raise SyntaxError("Se esperaba ')' después de la condición.")
+        self.eat("Delimitador")  # Consumir ')'
+
+        # Verificar el delimitador ';'
+        if self.tokens[self.current_token_index][0] != "Delimitador" or self.tokens[self.current_token_index][1] != ";":
+            raise SyntaxError("Se esperaba ';' al final de 'do-while'.")
+        self.eat("Delimitador")  # Consumir ';'
+
+        # Crear el nodo para el bucle do-while
+        return ASTNode("DoWhile", None, [instrucciones, condicion])
 
 
     def parse_instrucciones(self):

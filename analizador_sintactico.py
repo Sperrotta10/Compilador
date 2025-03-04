@@ -18,7 +18,6 @@ class ASTNode:
 
     def graficar(self, parent_id=None, node_count=0, nodes=[], edges=[], level=0):
         node_id = node_count
-        # Asegúrate de que el valor del nodo sea siempre una cadena
         nodes.append((node_id, f"{self.tipo}: {str(self.valor)}"))
         
         if parent_id is not None:
@@ -26,16 +25,13 @@ class ASTNode:
         
         node_count += 1
         
-        # Asegúrate de que los hijos sean una lista
         if not isinstance(self.hijos, list):
             self.hijos = [self.hijos]
         
         for hijo in self.hijos:
-            # Si el hijo no es un nodo ASTNode, lo tratamos de esta manera
             if isinstance(hijo, ASTNode):
                 node_count = hijo.graficar(parent_id=node_id, node_count=node_count, nodes=nodes, edges=edges, level=level + 1)
             else:
-                # En caso de que un hijo no sea un nodo ASTNode (por ejemplo, si es un valor simple)
                 nodes.append((node_count, f"Valor: {hijo}"))
                 edges.append((node_id, node_count))
                 node_count += 1
@@ -47,7 +43,6 @@ class ASTNode:
         edges = []
         self.graficar(node_count=0, nodes=nodes, edges=edges)
 
-        # Crear un grafo dirigido usando NetworkX
         G = nx.DiGraph()
         
         # Añadir los nodos
@@ -58,13 +53,12 @@ class ASTNode:
         for start, end in edges:
             G.add_edge(start, end)
 
-        # Crear un layout jerárquico
         pos = self.crear_layout_arbol(G, nodes, edges)
 
         labels = nx.get_node_attributes(G, 'label')
         
-        plt.figure(figsize=(10, 8))
-        nx.draw(G, pos, with_labels=True, labels=labels, node_size=3000, node_color='lightblue', font_size=10, font_weight='bold', arrows=True)
+        plt.figure(figsize=(12, 10))  # Ajustar el tamaño de la figura
+        nx.draw(G, pos, with_labels=True, labels=labels, node_size=4000, node_color='lightblue', font_size=9, font_weight='bold', arrows=True)
         
         plt.title("Árbol Sintáctico Abstracto")
         
@@ -72,32 +66,25 @@ class ASTNode:
         plt.savefig(output_filename, format="PNG")
         plt.show()
         print(f"Árbol guardado como imagen: {output_filename}")
-        
+
     def crear_layout_arbol(self, G, nodes, edges):
-        """
-        Crear una posición jerárquica de los nodos para simular un árbol.
-        """
         pos = {}
-        vertical_spacing = 1  # Espaciado vertical entre los niveles del árbol
+        vertical_spacing = 2  # Aumentar el espaciado vertical
         level_widths = self.calcular_anchos_por_nivel(nodes, edges)
         
-        # Establecer posiciones por nivel
         y_offset = 0
         for level, width in enumerate(level_widths):
-            x_spacing = 2  # Espaciado horizontal entre los nodos
+            x_spacing = 9000  # Aumentar el espaciado horizontal
             x_offset = - (width * x_spacing) / 2
             for node_id, label in nodes:
                 if self.obtener_nivel(node_id, edges) == level:
                     pos[node_id] = (x_offset, y_offset)
                     x_offset += x_spacing
-            y_offset -= vertical_spacing
+            y_offset += vertical_spacing  # Aumentar el desplazamiento vertical
         
         return pos
     
     def calcular_anchos_por_nivel(self, nodes, edges):
-        """
-        Calcular cuántos nodos hay en cada nivel del árbol.
-        """
         levels = {}
         for node_id, label in nodes:
             level = self.obtener_nivel(node_id, edges)
@@ -108,13 +95,11 @@ class ASTNode:
         return [levels.get(i, 0) for i in range(max(levels.keys()) + 1)]
 
     def obtener_nivel(self, node_id, edges):
-        """
-        Obtener el nivel del nodo, dado su id y las conexiones.
-        """
         for start, end in edges:
             if start == node_id:
                 return self.obtener_nivel(end, edges) + 1
         return 0  # Es el nodo raíz
+
 
 
 
@@ -293,7 +278,7 @@ class Parser:
         self.eat("Delimitador")  # Consumir '}'
 
         # Crear el nodo para el bucle while
-        return ASTNode("Sentencia While", None, [condicion, instrucciones])
+        return ASTNode("While", None, [condicion, instrucciones])
 
 
 
@@ -326,8 +311,6 @@ class Parser:
         
         # Crear el nodo para el bloque de instrucciones
         return ASTNode("Bloque", None, instrucciones)
-
-
 
             
     def parse(self):

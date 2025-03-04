@@ -344,6 +344,63 @@ class Parser:
 
         # Crear el nodo para el bucle do-while
         return ASTNode("DoWhile", None, [instrucciones, condicion])
+    
+    def parse_sentencia_for(self):
+        """Regla para una sentencia for: for (inicialización; condición; actualización) { ... }"""
+        
+        # Verificar la palabra clave 'for'
+        if self.current_token_index >= len(self.tokens):
+            raise SyntaxError("Se esperaba 'for', pero no hay más tokens.")
+        
+        token_type, token_value, _, _ = self.tokens[self.current_token_index]
+        if token_type != "Bucle" or token_value != "for":
+            raise SyntaxError(f"Se esperaba 'for', pero se encontró '{token_value}'.")
+        self.eat("Bucle")  # Consumir 'for'
+
+        # Verificar el delimitador '('
+        if self.tokens[self.current_token_index][0] != "Delimitador" or self.tokens[self.current_token_index][1] != "(":
+            raise SyntaxError("Se esperaba '(' después de 'for'.")
+        self.eat("Delimitador")  # Consumir '('
+
+        # Inicialización (puede ser una declaración de variable o una expresión)
+        inicializacion = self.parse_expresion()
+
+        # Verificar el delimitador ';'
+        if self.tokens[self.current_token_index][0] != "Delimitador" or self.tokens[self.current_token_index][1] != ";":
+            raise SyntaxError("Se esperaba ';' después de la inicialización.")
+        self.eat("Delimitador")  # Consumir ';'
+
+        # Condición
+        condicion = self.parse_expresion()
+
+        # Verificar el delimitador ';'
+        if self.tokens[self.current_token_index][0] != "Delimitador" or self.tokens[self.current_token_index][1] != ";":
+            raise SyntaxError("Se esperaba ';' después de la condición.")
+        self.eat("Delimitador")  # Consumir ';'
+
+        # Actualización
+        actualizacion = self.parse_expresion()
+
+        # Verificar el delimitador ')'
+        if self.tokens[self.current_token_index][0] != "Delimitador" or self.tokens[self.current_token_index][1] != ")":
+            raise SyntaxError("Se esperaba ')' después de la actualización.")
+        self.eat("Delimitador")  # Consumir ')'
+
+        # Verificar el delimitador de apertura del bloque '{'
+        if self.tokens[self.current_token_index][0] != "Delimitador" or self.tokens[self.current_token_index][1] != "{":
+            raise SyntaxError("Se esperaba '{' después de 'for'.")
+        self.eat("Delimitador")  # Consumir '{'
+
+        # Instrucciones dentro del bloque for
+        instrucciones = self.parse_instrucciones()
+
+        # Verificar el delimitador de cierre del bloque '}'
+        if self.tokens[self.current_token_index][0] != "Delimitador" or self.tokens[self.current_token_index][1] != "}":
+            raise SyntaxError("Se esperaba '}' al final del bloque 'for'.")
+        self.eat("Delimitador")  # Consumir '}'
+
+        # Crear el nodo para el bucle for
+        return ASTNode("For", None, [inicializacion, condicion, actualizacion, instrucciones])
 
 
     def parse_instrucciones(self):

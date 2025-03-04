@@ -401,6 +401,61 @@ class Parser:
 
         # Crear el nodo para el bucle for
         return ASTNode("For", None, [inicializacion, condicion, actualizacion, instrucciones])
+    
+
+    def parse_declaracion_funcion(self):
+        """Regla para una declaración de función: tipo_retorno nombre_funcion(parámetros) { ... }"""
+        
+        # Verificar el tipo de retorno
+        if self.current_token_index >= len(self.tokens):
+            raise SyntaxError("Se esperaba un tipo de retorno, pero no hay más tokens.")
+        
+        tipo_retorno = self.eat("Tipo de dato")  # Consumir el tipo de retorno
+
+        # Verificar el nombre de la función
+        nombre_funcion = self.eat("Identificador")  # Consumir el nombre de la función
+
+        # Verificar el delimitador '('
+        if self.tokens[self.current_token_index][0] != "Delimitador" or self.tokens[self.current_token_index][1] != "(":
+            raise SyntaxError("Se esperaba '(' después del nombre de la función.")
+        self.eat("Delimitador")  # Consumir '('
+
+        # Parámetros (pueden ser múltiples, separados por comas)
+        parametros = []
+        while self.current_token_index < len(self.tokens):
+            token_type, token_value, _, _ = self.tokens[self.current_token_index]
+            
+            if token_type == "Tipo de dato":
+                tipo_parametro = self.eat("Tipo de dato")
+                nombre_parametro = self.eat("Identificador")
+                parametros.append((tipo_parametro, nombre_parametro))
+            
+            # Verificar si hay más parámetros
+            if self.tokens[self.current_token_index][0] == "Delimitador" and self.tokens[self.current_token_index][1] == ",":
+                self.eat("Delimitador")  # Consumir ','
+            else:
+                break
+
+        # Verificar el delimitador ')'
+        if self.tokens[self.current_token_index][0] != "Delimitador" or self.tokens[self.current_token_index][1] != ")":
+            raise SyntaxError("Se esperaba ')' después de los parámetros.")
+        self.eat("Delimitador")  # Consumir ')'
+
+        # Verificar el delimitador de apertura del bloque '{'
+        if self.tokens[self.current_token_index][0] != "Delimitador" or self.tokens[self.current_token_index][1] != "{":
+            raise SyntaxError("Se esperaba '{' después de la declaración de la función.")
+        self.eat("Delimitador")  # Consumir '{'
+
+        # Instrucciones dentro del bloque de la función
+        instrucciones = self.parse_instrucciones()
+
+        # Verificar el delimitador de cierre del bloque '}'
+        if self.tokens[self.current_token_index][0] != "Delimitador" or self.tokens[self.current_token_index][1] != "}":
+            raise SyntaxError("Se esperaba '}' al final del bloque de la función.")
+        self.eat("Delimitador")  # Consumir '}'
+
+        # Crear el nodo para la declaración de la función
+        return ASTNode("Funcion", tipo_retorno, [nombre_funcion, parametros, instrucciones])
 
 
     def parse_instrucciones(self):

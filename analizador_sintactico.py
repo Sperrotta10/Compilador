@@ -636,16 +636,34 @@ class Parser:
     
 
     def parse_declaracion_clase(self):
-        """Regla para una declaración de clase: class NombreClase { ... }"""
+        """Regla para una declaración de clase: [modificadores] class NombreClase { ... }"""
+        
+        # Lista para almacenar los modificadores
+        modificadores = []
+        
+        # Verificar modificadores (public, private, protected, final, abstract)
+        while self.current_token_index < len(self.tokens):
+            token_type, token_value, _, _ = self.tokens[self.current_token_index]
+            
+            if token_type == "Token de Acceso" or token_type == "Palabra Reservada":
+                if token_value in ["public", "private", "protected", "final", "abstract"]:
+                    modificadores.append(token_value)
+                    self.eat(token_type)  # Consumir el modificador
+                elif token_value == "static":
+                    raise SyntaxError("Error: Una clase no puede ser 'static'.")
+                else:
+                    break  # Salir del bucle si no es un modificador válido
+            else:
+                break  # Salir del bucle si no es un modificador
         
         # Verificar la palabra clave 'class'
         if self.current_token_index >= len(self.tokens):
             raise SyntaxError("Se esperaba 'class', pero no hay más tokens.")
         
         token_type, token_value, _, _ = self.tokens[self.current_token_index]
-        if token_type != "PalabraClave" or token_value != "class":
+        if token_type != "Palabra Reservada" or token_value != "class":
             raise SyntaxError(f"Se esperaba 'class', pero se encontró '{token_value}'.")
-        self.eat("PalabraClave")  # Consumir 'class'
+        self.eat("Palabra Reservada")  # Consumir 'class'
 
         # Nombre de la clase
         nombre_clase = self.eat("Identificador")  # Consumir el nombre de la clase
@@ -661,11 +679,11 @@ class Parser:
             token_type, token_value, _, _ = self.tokens[self.current_token_index]
             
             # Verificar si es un atributo (declaración de variable)
-            if token_type == "Tipo de dato":
+            if token_type == "Tipo de dato" or token_type == "Token de Acceso":
                 miembros.append(self.parse_declaracion_variable())  # Atributo
             
             # Verificar si es un método (declaración de función)
-            elif token_type == "Tipo de dato" or token_type == "PalabraClave" and token_value == "void":
+            elif token_type == "Tipo de dato" or token_type == "Palabra Reservada" and token_value == "void":
                 miembros.append(self.parse_declaracion_funcion())  # Método
             
             # Verificar el delimitador de cierre del bloque '}'
@@ -681,7 +699,7 @@ class Parser:
         self.eat("Delimitador")  # Consumir '}'
 
         # Crear el nodo para la declaración de la clase
-        return ASTNode("Clase", None, [nombre_clase, miembros])
+        return ASTNode("Clase", None, [modificadores, nombre_clase, miembros])
 
 
     def parse_instrucciones(self):

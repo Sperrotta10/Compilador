@@ -456,6 +456,72 @@ class Parser:
 
         # Crear el nodo para la declaración de la función
         return ASTNode("Funcion", tipo_retorno, [nombre_funcion, parametros, instrucciones])
+    
+    def parse_sentencia_try_catch(self):
+        """Regla para una sentencia try-catch: try { ... } catch (TipoExcepcion e) { ... }"""
+        
+        # Verificar la palabra clave 'try'
+        if self.current_token_index >= len(self.tokens):
+            raise SyntaxError("Se esperaba 'try', pero no hay más tokens.")
+        
+        token_type, token_value, _, _ = self.tokens[self.current_token_index]
+        if token_type != "PalabraClave" or token_value != "try":
+            raise SyntaxError(f"Se esperaba 'try', pero se encontró '{token_value}'.")
+        self.eat("PalabraClave")  # Consumir 'try'
+
+        # Verificar el delimitador de apertura del bloque '{'
+        if self.tokens[self.current_token_index][0] != "Delimitador" or self.tokens[self.current_token_index][1] != "{":
+            raise SyntaxError("Se esperaba '{' después de 'try'.")
+        self.eat("Delimitador")  # Consumir '{'
+
+        # Instrucciones dentro del bloque try
+        instrucciones_try = self.parse_instrucciones()
+
+        # Verificar el delimitador de cierre del bloque '}'
+        if self.tokens[self.current_token_index][0] != "Delimitador" or self.tokens[self.current_token_index][1] != "}":
+            raise SyntaxError("Se esperaba '}' al final del bloque 'try'.")
+        self.eat("Delimitador")  # Consumir '}'
+
+        # Verificar la palabra clave 'catch'
+        if self.current_token_index >= len(self.tokens):
+            raise SyntaxError("Se esperaba 'catch', pero no hay más tokens.")
+        
+        token_type, token_value, _, _ = self.tokens[self.current_token_index]
+        if token_type != "PalabraClave" or token_value != "catch":
+            raise SyntaxError(f"Se esperaba 'catch', pero se encontró '{token_value}'.")
+        self.eat("PalabraClave")  # Consumir 'catch'
+
+        # Verificar el delimitador '('
+        if self.tokens[self.current_token_index][0] != "Delimitador" or self.tokens[self.current_token_index][1] != "(":
+            raise SyntaxError("Se esperaba '(' después de 'catch'.")
+        self.eat("Delimitador")  # Consumir '('
+
+        # Tipo de excepción
+        tipo_excepcion = self.eat("Tipo de dato")  # Consumir el tipo de excepción
+
+        # Nombre de la variable de excepción
+        nombre_excepcion = self.eat("Identificador")  # Consumir el nombre de la excepción
+
+        # Verificar el delimitador ')'
+        if self.tokens[self.current_token_index][0] != "Delimitador" or self.tokens[self.current_token_index][1] != ")":
+            raise SyntaxError("Se esperaba ')' después de la declaración de la excepción.")
+        self.eat("Delimitador")  # Consumir ')'
+
+        # Verificar el delimitador de apertura del bloque '{'
+        if self.tokens[self.current_token_index][0] != "Delimitador" or self.tokens[self.current_token_index][1] != "{":
+            raise SyntaxError("Se esperaba '{' después de 'catch'.")
+        self.eat("Delimitador")  # Consumir '{'
+
+        # Instrucciones dentro del bloque catch
+        instrucciones_catch = self.parse_instrucciones()
+
+        # Verificar el delimitador de cierre del bloque '}'
+        if self.tokens[self.current_token_index][0] != "Delimitador" or self.tokens[self.current_token_index][1] != "}":
+            raise SyntaxError("Se esperaba '}' al final del bloque 'catch'.")
+        self.eat("Delimitador")  # Consumir '}'
+
+        # Crear el nodo para la sentencia try-catch
+        return ASTNode("TryCatch", None, [instrucciones_try, (tipo_excepcion, nombre_excepcion), instrucciones_catch])
 
 
     def parse_instrucciones(self):

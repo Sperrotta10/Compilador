@@ -457,6 +457,7 @@ class Parser:
         # Crear el nodo para la declaración de la función
         return ASTNode("Funcion", tipo_retorno, [nombre_funcion, parametros, instrucciones])
     
+
     def parse_sentencia_try_catch(self):
         """Regla para una sentencia try-catch: try { ... } catch (TipoExcepcion e) { ... }"""
         
@@ -523,6 +524,7 @@ class Parser:
         # Crear el nodo para la sentencia try-catch
         return ASTNode("TryCatch", None, [instrucciones_try, (tipo_excepcion, nombre_excepcion), instrucciones_catch])
     
+
     def parse_sentencia_switch(self):
         """Regla para una sentencia switch: switch (expresión) { case valor: ... break; default: ... }"""
         
@@ -691,19 +693,19 @@ class Parser:
                 instrucciones.append(self.parse_sentencia_for())  # Sentencia for
             
             # 6. Sentencia try-catch
-            elif token_type == "PalabraClave" and token_value == "try":
+            elif token_type == "Excepción" and token_value == "try":
                 instrucciones.append(self.parse_sentencia_try_catch())  # Sentencia try-catch
             
             # 7. Sentencia switch
-            elif token_type == "PalabraClave" and token_value == "switch":
+            elif token_type == "Palabra Reservada" and token_value == "switch":
                 instrucciones.append(self.parse_sentencia_switch())  # Sentencia switch
             
             # 8. Declaración de función
-            elif token_type == "Tipo de dato" or (token_type == "PalabraClave" and token_value == "void"):
+            elif token_type == "Tipo de dato" or (token_type == "Palabra Reservada" and token_value == "void"):
                 instrucciones.append(self.parse_declaracion_funcion())  # Declaración de función
             
             # 9. Declaración de clase
-            elif token_type == "PalabraClave" and token_value == "class":
+            elif token_type == "Palabra Reservada" and token_value == "class":
                 instrucciones.append(self.parse_declaracion_clase())  # Declaración de clase
             
             # 10. Expresión o asignación

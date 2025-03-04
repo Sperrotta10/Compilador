@@ -159,8 +159,8 @@ class Parser:
         return ASTNode("Expresion", izquierda, [])
 
 
-    def parse_declaracion_variable(self):
-        """Regla para una declaración de variable en Java: Tipo Identificador = Valor ;"""
+    def parse_declaracion_variable(self, modificadores):
+        """Regla para una declaración de variable en Java: [modificadores] Tipo Identificador = Valor ;"""
         if self.current_token_index < len(self.tokens):
             token_type, _, _, _ = self.tokens[self.current_token_index]
             if token_type == "Tipo de dato":
@@ -171,15 +171,16 @@ class Parser:
                     valor = self.parse_expresion()
                 self.eat("Delimitador")  # Punto y coma ';'
                 
-                # Crear el nodo de la declaración de la variable con el operador de asignación
+                # Crear el nodo de la declaración de la variable con el operador de asignación y los modificadores
                 if operador_asignacion:
-                    return ASTNode("Declaracion", tipo_dato, [ASTNode("Identificador", identificador, []), operador_asignacion, valor])
+                    return ASTNode("Declaracion", tipo_dato, [modificadores, ASTNode("Identificador", identificador, []), operador_asignacion, valor])
                 else:
-                    return ASTNode("Declaracion", tipo_dato, [ASTNode("Identificador", identificador, []), None])  # Sin valor si no hay asignación
+                    return ASTNode("Declaracion", tipo_dato, [modificadores, ASTNode("Identificador", identificador, []), None])  # Sin valor si no hay asignación
             else:
                 raise SyntaxError("Error: Se esperaba un tipo de dato al inicio de la declaración.")
         else:
             raise SyntaxError("Error: No se encontraron más tokens para procesar.")
+
 
     def parse_sentencia_if(self):
         """Analiza una sentencia 'if' con su bloque de instrucciones y opcionales 'else' o 'else if'."""
@@ -403,24 +404,10 @@ class Parser:
         return ASTNode("For", None, [inicializacion, condicion, actualizacion, instrucciones])
     
 
-    def parse_declaracion_funcion(self):
+    def parse_declaracion_funcion(self, modificadores=None):
         """Regla para una declaración de función: [modificadores] tipo_retorno nombre_funcion(parámetros) { ... }"""
-        
-        # Lista para almacenar los modificadores
-        modificadores = []
-        
-        # Verificar modificadores (public, private, protected, static, final, abstract)
-        while self.current_token_index < len(self.tokens):
-            token_type, token_value, _, _ = self.tokens[self.current_token_index]
-            
-            if token_type == "Token de Acceso" or token_type == "Palabra Reservada":
-                if token_value in ["public", "private", "protected", "static", "final", "abstract"]:
-                    modificadores.append(token_value)
-                    self.eat(token_type)  # Consumir el modificador
-                else:
-                    break  # Salir del bucle si no es un modificador válido
-            else:
-                break  # Salir del bucle si no es un modificador
+        if modificadores is None:
+            modificadores = []  # Si no se proporcionan modificadores, usar una lista vacía
         
         # Validar combinaciones inválidas de modificadores
         if "abstract" in modificadores and "final" in modificadores:
@@ -635,26 +622,10 @@ class Parser:
         return ASTNode("Switch", None, [expresion, casos, default_case])
     
 
-    def parse_declaracion_clase(self):
+    def parse_declaracion_clase(self, modificadores=None):
         """Regla para una declaración de clase: [modificadores] class NombreClase { ... }"""
-        
-        # Lista para almacenar los modificadores
-        modificadores = []
-        
-        # Verificar modificadores (public, private, protected, final, abstract)
-        while self.current_token_index < len(self.tokens):
-            token_type, token_value, _, _ = self.tokens[self.current_token_index]
-            
-            if token_type == "Token de Acceso" or token_type == "Palabra Reservada":
-                if token_value in ["public", "private", "protected", "final", "abstract"]:
-                    modificadores.append(token_value)
-                    self.eat(token_type)  # Consumir el modificador
-                elif token_value == "static":
-                    raise SyntaxError("Error: Una clase no puede ser 'static'.")
-                else:
-                    break  # Salir del bucle si no es un modificador válido
-            else:
-                break  # Salir del bucle si no es un modificador
+        if modificadores is None:
+            modificadores = []  # Si no se proporcionan modificadores, usar una lista vacía
         
         # Verificar la palabra clave 'class'
         if self.current_token_index >= len(self.tokens):
@@ -702,6 +673,25 @@ class Parser:
         return ASTNode("Clase", None, [modificadores, nombre_clase, miembros])
 
 
+    def parse_modificadores(self):
+        """Recolecta los modificadores de acceso y otros modificadores."""
+        modificadores = []
+        while self.current_token_index < len(self.tokens):
+            token_type, token_value, _, _ = self.tokens[self.current_token_index]
+            
+            # Verificar si es un modificador válido
+            if token_type == "Token de Acceso" or token_type == "Palabra Reservada":
+                if token_value in ["public", "private", "protected", "static", "final", "abstract"]:
+                    modificadores.append(token_value)
+                    self.eat(token_type)  # Consumir el modificador
+                else:
+                    break  # Salir del bucle si no es un modificador válido
+            else:
+                break  # Salir del bucle si no es un modificador
+        
+        return modificadores
+
+
     def parse_instrucciones(self):
         """Analiza las instrucciones dentro de un bloque."""
         instrucciones = []
@@ -712,60 +702,66 @@ class Parser:
             if token_type == "Delimitador" and token_value == "}":
                 break  # Detiene el bucle si encuentra un '}'
             
-            # 1. Declaración de variable
-            if token_type == "Tipo de dato":
-                instrucciones.append(self.parse_declaracion_variable())  # Declaración de variable
+            # Recolectar modificadores (public, private, protected, static, etc.)
+            modificadores = self.parse_modificadores()
             
-            # 2. Sentencia if
-            elif token_type == "Condicional" and token_value == "if":
-                instrucciones.append(self.parse_sentencia_if())  # Sentencia if
-            
-            # 3. Sentencia while
-            elif token_type == "Bucle" and token_value == "while":
-                instrucciones.append(self.parse_sentencia_while())  # Sentencia while
-            
-            # 4. Sentencia do-while
-            elif token_type == "Bucle" and token_value == "do":
-                instrucciones.append(self.parse_sentencia_do_while())  # Sentencia do-while
-            
-            # 5. Sentencia for
-            elif token_type == "Bucle" and token_value == "for":
-                instrucciones.append(self.parse_sentencia_for())  # Sentencia for
-            
-            # 6. Sentencia try-catch
-            elif token_type == "Excepción" and token_value == "try":
-                instrucciones.append(self.parse_sentencia_try_catch())  # Sentencia try-catch
-            
-            # 7. Sentencia switch
-            elif token_type == "Palabra Reservada" and token_value == "switch":
-                instrucciones.append(self.parse_sentencia_switch())  # Sentencia switch
-            
-            # 8. Declaración de función
-            elif token_type == "Tipo de dato" or (token_type == "Palabra Reservada" and token_value == "void"):
-                instrucciones.append(self.parse_declaracion_funcion())  # Declaración de función
-            
-            # 9. Declaración de clase
-            elif token_type == "Palabra Reservada" and token_value == "class":
-                instrucciones.append(self.parse_declaracion_clase())  # Declaración de clase
-            
-            # 10. Expresión o asignación
-            elif token_type == "Identificador":
-                if self.current_token_index + 1 < len(self.tokens) and self.tokens[self.current_token_index + 1][0] == "Operador de Asignación":
-                    instrucciones.append(self.parse_expresion())  # Asignación
+            # Verificar el tipo de declaración basado en el siguiente token
+            if self.current_token_index < len(self.tokens):
+                token_type, token_value, _, _ = self.tokens[self.current_token_index]
+                
+                # 1. Declaración de variable
+                if token_type == "Tipo de dato":
+                    instrucciones.append(self.parse_declaracion_variable(modificadores))  # Declaración de variable
+                
+                # 2. Declaración de función
+                elif token_type == "Tipo de dato" or (token_type == "Palabra Reservada" and token_value == "void"):
+                    instrucciones.append(self.parse_declaracion_funcion(modificadores))  # Declaración de función
+                
+                # 3. Declaración de clase
+                elif token_type == "Palabra Reservada" and token_value == "class":
+                    instrucciones.append(self.parse_declaracion_clase(modificadores))  # Declaración de clase
+                
+                # 4. Sentencia if
+                elif token_type == "Condicional" and token_value == "if":
+                    instrucciones.append(self.parse_sentencia_if())  # Sentencia if
+                
+                # 5. Sentencia while
+                elif token_type == "Bucle" and token_value == "while":
+                    instrucciones.append(self.parse_sentencia_while())  # Sentencia while
+                
+                # 6. Sentencia do-while
+                elif token_type == "Bucle" and token_value == "do":
+                    instrucciones.append(self.parse_sentencia_do_while())  # Sentencia do-while
+                
+                # 7. Sentencia for
+                elif token_type == "Bucle" and token_value == "for":
+                    instrucciones.append(self.parse_sentencia_for())  # Sentencia for
+                
+                # 8. Sentencia try-catch
+                elif token_type == "Excepción" and token_value == "try":
+                    instrucciones.append(self.parse_sentencia_try_catch())  # Sentencia try-catch
+                
+                # 9. Sentencia switch
+                elif token_type == "Palabra Reservada" and token_value == "switch":
+                    instrucciones.append(self.parse_sentencia_switch())  # Sentencia switch
+                
+                # 10. Expresión o asignación
+                elif token_type == "Identificador":
+                    if self.current_token_index + 1 < len(self.tokens) and self.tokens[self.current_token_index + 1][0] == "Operador de Asignación":
+                        instrucciones.append(self.parse_expresion())  # Asignación
+                    else:
+                        instrucciones.append(self.parse_expresion())  # Expresión
+                
+                # 11. Delimitador (punto y coma)
+                elif token_type == "Delimitador" and token_value == ";":
+                    self.eat("Delimitador")  # Consumir ';' (instrucción vacía)
+                
+                # 12. Token inesperado
                 else:
-                    instrucciones.append(self.parse_expresion())  # Expresión
-            
-            # 11. Delimitador (punto y coma)
-            elif token_type == "Delimitador" and token_value == ";":
-                self.eat("Delimitador")  # Consumir ';' (instrucción vacía)
-            
-            # 12. Token inesperado
-            else:
-                raise SyntaxError(f"Token inesperado '{token_type}: {token_value}'")
+                    raise SyntaxError(f"Token inesperado '{token_type}: {token_value}'")
         
         # Crear el nodo para el bloque de instrucciones
         return ASTNode("Bloque", None, instrucciones)
-
             
     def parse(self):
         """Inicia el análisis sintáctico"""
@@ -790,6 +786,8 @@ class Parser:
             print(f"Error inesperado: {e}")
 
 
-tokens = [('Tipo de dato', 'int', 1, 1), ('Identificador', 'x', 1, 5), ('Operador de Asignación', '=', 1, 7), ('Número', '5', 1, 9), ('Delimitador', ';', 1, 10), ('Condicional', 'if', 2, 1), ('Delimitador', '(', 2, 4), ('Identificador', 'x', 2, 5), ('Operador Relacional', '>', 2, 7), ('Número', '3', 2, 9), ('Delimitador', ')', 2, 10), ('Delimitador', '{', 2, 12), ('Identificador', 'x', 3, 5), ('Operador de Asignación', '=', 3, 7), ('Identificador', 'x', 3, 9), ('Operador Aritmético', '+', 3, 11), ('Número', '1', 3, 13), ('Delimitador', ';', 3, 14), ('Delimitador', '}', 4, 1), ('Bucle', 'while', 5, 1), ('Delimitador', '(', 5, 7), ('Identificador', 'x', 5, 8), ('Operador Relacional', '<', 5, 10), ('Número', '10', 5, 12), ('Delimitador', ')', 5, 14), ('Delimitador', '{', 5, 16), ('Identificador', 'x', 6, 5), ('Operador de Asignación', '=', 6, 7), ('Identificador', 'x', 6, 9), ('Operador Aritmético', '+', 6, 11), ('Número', '2', 6, 13), ('Delimitador', ';', 6, 14), ('Delimitador', '}', 7, 1)]
+"""
+"""
+tokens = [('Token de Acceso', 'public', 1, 1), ('Palabra Reservada', 'class', 1, 8), ('Identificador', 'MiClase', 1, 14), ('Delimitador', '{', 1, 22), ('Token de Acceso', 'private', 2, 5), ('Tipo de dato', 'int', 2, 13), ('Identificador', 'x', 2, 17), ('Delimitador', ';', 2, 18), ('Token de Acceso', 'public', 4, 5), ('Palabra Reservada', 'void', 4, 12), ('Identificador', 'metodo', 4, 17), ('Delimitador', '(', 4, 23), ('Delimitador', ')', 4, 24), ('Delimitador', '{', 4, 26), ('Identificador', 'x', 5, 9), ('Operador de Asignación', '=', 5, 11), ('Número', '10', 5, 13), ('Delimitador', ';', 5, 15), ('Delimitador', '}', 6, 5), ('Delimitador', '}', 7, 1)]
 parsear = Parser(tokens)
 parsear.parse()

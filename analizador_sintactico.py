@@ -1,3 +1,6 @@
+import matplotlib.pyplot as plt
+import networkx as nx
+
 class ASTNode:
     def __init__(self, tipo, valor=None, hijos=None):
         self.tipo = tipo
@@ -5,14 +8,114 @@ class ASTNode:
         self.hijos = hijos or []
 
     def __str__(self):
-        # Representación legible del nodo
         if isinstance(self.hijos, list) and self.hijos:
             hijos_str = ", ".join(str(hijo) for hijo in self.hijos)
             return f"{self.tipo}: {self.valor}, Hijos: [{hijos_str}]"
-        elif isinstance(self.hijos, ASTNode):  # Si es un solo nodo hijo
+        elif isinstance(self.hijos, ASTNode):
             return f"{self.tipo}: {self.valor}, Hijo: [{str(self.hijos)}]"
         else:
             return f"{self.tipo}: {self.valor}"
+
+    def graficar(self, parent_id=None, node_count=0, nodes=[], edges=[], level=0):
+        node_id = node_count
+        # Asegúrate de que el valor del nodo sea siempre una cadena
+        nodes.append((node_id, f"{self.tipo}: {str(self.valor)}"))
+        
+        if parent_id is not None:
+            edges.append((parent_id, node_id))
+        
+        node_count += 1
+        
+        # Asegúrate de que los hijos sean una lista
+        if not isinstance(self.hijos, list):
+            self.hijos = [self.hijos]
+        
+        for hijo in self.hijos:
+            # Si el hijo no es un nodo ASTNode, lo tratamos de esta manera
+            if isinstance(hijo, ASTNode):
+                node_count = hijo.graficar(parent_id=node_id, node_count=node_count, nodes=nodes, edges=edges, level=level + 1)
+            else:
+                # En caso de que un hijo no sea un nodo ASTNode (por ejemplo, si es un valor simple)
+                nodes.append((node_count, f"Valor: {hijo}"))
+                edges.append((node_id, node_count))
+                node_count += 1
+        
+        return node_count
+
+    def graficar_mpl(self, output_filename="arbol_sintactico.png"):
+        nodes = []
+        edges = []
+        self.graficar(node_count=0, nodes=nodes, edges=edges)
+
+        # Crear un grafo dirigido usando NetworkX
+        G = nx.DiGraph()
+        
+        # Añadir los nodos
+        for node_id, label in nodes:
+            G.add_node(node_id, label=label)
+
+        # Añadir los bordes
+        for start, end in edges:
+            G.add_edge(start, end)
+
+        # Crear un layout jerárquico
+        pos = self.crear_layout_arbol(G, nodes, edges)
+
+        labels = nx.get_node_attributes(G, 'label')
+        
+        plt.figure(figsize=(10, 8))
+        nx.draw(G, pos, with_labels=True, labels=labels, node_size=3000, node_color='lightblue', font_size=10, font_weight='bold', arrows=True)
+        
+        plt.title("Árbol Sintáctico Abstracto")
+        
+        # Guardar la imagen
+        plt.savefig(output_filename, format="PNG")
+        plt.show()
+        print(f"Árbol guardado como imagen: {output_filename}")
+        
+    def crear_layout_arbol(self, G, nodes, edges):
+        """
+        Crear una posición jerárquica de los nodos para simular un árbol.
+        """
+        pos = {}
+        vertical_spacing = 1  # Espaciado vertical entre los niveles del árbol
+        level_widths = self.calcular_anchos_por_nivel(nodes, edges)
+        
+        # Establecer posiciones por nivel
+        y_offset = 0
+        for level, width in enumerate(level_widths):
+            x_spacing = 2  # Espaciado horizontal entre los nodos
+            x_offset = - (width * x_spacing) / 2
+            for node_id, label in nodes:
+                if self.obtener_nivel(node_id, edges) == level:
+                    pos[node_id] = (x_offset, y_offset)
+                    x_offset += x_spacing
+            y_offset -= vertical_spacing
+        
+        return pos
+    
+    def calcular_anchos_por_nivel(self, nodes, edges):
+        """
+        Calcular cuántos nodos hay en cada nivel del árbol.
+        """
+        levels = {}
+        for node_id, label in nodes:
+            level = self.obtener_nivel(node_id, edges)
+            if level not in levels:
+                levels[level] = 0
+            levels[level] += 1
+        
+        return [levels.get(i, 0) for i in range(max(levels.keys()) + 1)]
+
+    def obtener_nivel(self, node_id, edges):
+        """
+        Obtener el nivel del nodo, dado su id y las conexiones.
+        """
+        for start, end in edges:
+            if start == node_id:
+                return self.obtener_nivel(end, edges) + 1
+        return 0  # Es el nodo raíz
+
 
 
 class Parser:
@@ -49,9 +152,9 @@ class Parser:
         
         # Manejo de asignación
         if self.current_token_index < len(self.tokens) and self.tokens[self.current_token_index][0] == "Operador de Asignación":
-            self.eat("Operador de Asignación")
+            operador_asignacion = self.eat("Operador de Asignación")
             derecha = self.parse_expresion()  # Llamamos de nuevo a parse_expresion() para procesar la parte derecha
-            return ASTNode("Asignacion", None, [ASTNode("Identificador", izquierda, []), derecha])
+            return ASTNode("Asignacion", operador_asignacion, [ASTNode("Identificador", izquierda, []), derecha])
         
         # Manejo de Operadores aritméticos o relacionales
         if self.tokens[self.current_token_index][0] in ["Operador Aritmético", "Operador Relacional"]:
@@ -70,12 +173,15 @@ class Parser:
                 tipo_dato = self.eat("Tipo de dato")  # Tipo de dato (int, float, etc.)
                 identificador = self.eat("Identificador")  # Nombre de la variable
                 if self.tokens[self.current_token_index][0] == "Operador de Asignación":
-                    self.eat("Operador de Asignación")  # Operador '='
+                    operador_asignacion = self.eat("Operador de Asignación")  # Operador '='
                     valor = self.parse_expresion()
                 self.eat("Delimitador")  # Punto y coma ';'
                 
-                # Crear el nodo de la declaración de la variable
-                return ASTNode("Declaracion", tipo_dato, [ASTNode("Identificador", identificador, []), valor])
+                # Crear el nodo de la declaración de la variable con el operador de asignación
+                if operador_asignacion:
+                    return ASTNode("Declaracion", tipo_dato, [ASTNode("Identificador", identificador, []), operador_asignacion, valor])
+                else:
+                    return ASTNode("Declaracion", tipo_dato, [ASTNode("Identificador", identificador, []), None])  # Sin valor si no hay asignación
             else:
                 raise SyntaxError("Error: Se esperaba un tipo de dato al inicio de la declaración.")
         else:
@@ -235,6 +341,10 @@ class Parser:
             if self.current_token_index < len(self.tokens):
                 raise SyntaxError(f"Token inesperado '{self.tokens[self.current_token_index][1]}' al final del código.")
 
+            
+            # Graficamos el árbol después de generarlo
+            ast.graficar_mpl()
+
             return ast  # Retornar el árbol de sintaxis abstracta
 
         except SyntaxError as e:
@@ -245,5 +355,4 @@ class Parser:
 
 tokens = [('Tipo de dato', 'int', 1, 1), ('Identificador', 'x', 1, 5), ('Operador de Asignación', '=', 1, 7), ('Número', '5', 1, 9), ('Delimitador', ';', 1, 10), ('Condicional', 'if', 2, 1), ('Delimitador', '(', 2, 4), ('Identificador', 'x', 2, 5), ('Operador Relacional', '>', 2, 7), ('Número', '3', 2, 9), ('Delimitador', ')', 2, 10), ('Delimitador', '{', 2, 12), ('Identificador', 'x', 3, 5), ('Operador de Asignación', '=', 3, 7), ('Identificador', 'x', 3, 9), ('Operador Aritmético', '+', 3, 11), ('Número', '1', 3, 13), ('Delimitador', ';', 3, 14), ('Delimitador', '}', 4, 1), ('Bucle', 'while', 5, 1), ('Delimitador', '(', 5, 7), ('Identificador', 'x', 5, 8), ('Operador Relacional', '<', 5, 10), ('Número', '10', 5, 12), ('Delimitador', ')', 5, 14), ('Delimitador', '{', 5, 16), ('Identificador', 'x', 6, 5), ('Operador de Asignación', '=', 6, 7), ('Identificador', 'x', 6, 9), ('Operador Aritmético', '+', 6, 11), ('Número', '2', 6, 13), ('Delimitador', ';', 6, 14), ('Delimitador', '}', 7, 1)]
 parsear = Parser(tokens)
-resultado = parsear.parse()
-print(resultado)
+parsear.parse()

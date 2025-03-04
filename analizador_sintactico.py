@@ -57,15 +57,17 @@ class ASTNode:
 
         labels = nx.get_node_attributes(G, 'label')
 
-        plt.figure(figsize=(12, 10))  # Ajustar el tamaño de la figura
-        nx.draw(G, pos, with_labels=True, labels=labels, node_size=4000, node_color='lightblue', font_size=9, font_weight='bold', arrows=True)
+        plt.figure(figsize=(20, 15))  # Aumentar el tamaño de la figura
+        nx.draw(G, pos, with_labels=True, labels=labels, node_size=2000, node_color='lightblue', font_size=7, font_weight='bold', arrows=True)  # Reducir el tamaño de los nodos y la fuente
 
         plt.title("Árbol Sintáctico Abstracto")
+        plt.tight_layout()  # Ajustar los límites del gráfico
 
         # Guardar la imagen
         plt.savefig(output_filename, format="PNG")
         plt.show()
         print(f"Árbol guardado como imagen: {output_filename}")
+
 
     def crear_layout_arbol(self, G, nodes, edges):
         pos = {}
@@ -77,13 +79,13 @@ class ASTNode:
             levels[level].append(node_id)
 
         max_level = max(levels.keys()) if levels else 0
-        vertical_spacing = 1  # Espaciado vertical entre niveles
+        vertical_spacing = 2  # Aumentar el espaciado vertical
+        horizontal_spacing = 4  # Aumentar el espaciado horizontal
 
         for level in range(max_level + 1):
             if level not in levels:
                 continue
 
-            horizontal_spacing = 2  # Espaciado horizontal entre nodos en el mismo nivel
             level_width = len(levels[level]) * horizontal_spacing
             x_start = -level_width / 2  # Centrar los nodos en el nivel
 
@@ -93,6 +95,7 @@ class ASTNode:
                 pos[node_id] = (x, y)
 
         return pos
+
 
     def obtener_nivel(self, node_id, edges):
         parent = self.obtener_padre(node_id, edges)

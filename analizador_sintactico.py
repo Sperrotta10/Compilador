@@ -455,32 +455,40 @@ class Parser:
         # Verificar el nombre de la función
         nombre_funcion = self.eat("Identificador")  # Consumir el nombre de la función
 
+        print('Hola 0')
         # Verificar el delimitador '('
         if self.tokens[self.current_token_index][0] != "Delimitador" or self.tokens[self.current_token_index][1] != "(":
             raise SyntaxError("Se esperaba '(' después del nombre de la función.")
         self.eat("Delimitador")  # Consumir '('
 
+        print('Hola 0.5')
         # Parámetros (pueden ser múltiples, separados por comas)
         parametros = []
         while self.current_token_index < len(self.tokens):
             token_type, token_value, _, _ = self.tokens[self.current_token_index]
+            
+            # Si encontramos ')', significa que no hay más parámetros
+            if token_type == "Delimitador" and token_value == ")":
+                break  # Salir del bucle si encontramos ')'
             
             if token_type == "Tipo de dato":
                 tipo_parametro = self.eat("Tipo de dato")
                 nombre_parametro = self.eat("Identificador")
                 parametros.append((tipo_parametro, nombre_parametro))
             
-            # Verificar si hay más parámetros
-            if self.tokens[self.current_token_index][0] == "Delimitador" and self.tokens[self.current_token_index][1] == ",":
-                self.eat("Delimitador")  # Consumir ','
+                # Verificar si hay más parámetros
+                if self.current_token_index < len(self.tokens) and self.tokens[self.current_token_index][0] == "Delimitador" and self.tokens[self.current_token_index][1] == ",":
+                    self.eat("Delimitador")  # Consumir ','
             else:
-                break
+                raise SyntaxError(f"Error: Token inesperado '{token_value}' en la lista de parámetros.")
 
+        print("Hola 1")
         # Verificar el delimitador ')'
         if self.tokens[self.current_token_index][0] != "Delimitador" or self.tokens[self.current_token_index][1] != ")":
             raise SyntaxError("Se esperaba ')' después de los parámetros.")
         self.eat("Delimitador")  # Consumir ')'
 
+        print("Hola 2")
         # Verificar el delimitador de apertura del bloque '{'
         if self.tokens[self.current_token_index][0] != "Delimitador" or self.tokens[self.current_token_index][1] != "{":
             raise SyntaxError("Se esperaba '{' después de la declaración de la función.")
@@ -506,9 +514,9 @@ class Parser:
             raise SyntaxError("Se esperaba 'try', pero no hay más tokens.")
         
         token_type, token_value, _, _ = self.tokens[self.current_token_index]
-        if token_type != "PalabraClave" or token_value != "try":
+        if token_type != "Excepción" or token_value != "try":
             raise SyntaxError(f"Se esperaba 'try', pero se encontró '{token_value}'.")
-        self.eat("PalabraClave")  # Consumir 'try'
+        self.eat("Excepción")  # Consumir 'try'
 
         # Verificar el delimitador de apertura del bloque '{'
         if self.tokens[self.current_token_index][0] != "Delimitador" or self.tokens[self.current_token_index][1] != "{":
@@ -528,9 +536,9 @@ class Parser:
             raise SyntaxError("Se esperaba 'catch', pero no hay más tokens.")
         
         token_type, token_value, _, _ = self.tokens[self.current_token_index]
-        if token_type != "PalabraClave" or token_value != "catch":
+        if token_type != "Excepción" or token_value != "catch":
             raise SyntaxError(f"Se esperaba 'catch', pero se encontró '{token_value}'.")
-        self.eat("PalabraClave")  # Consumir 'catch'
+        self.eat("Excepción")  # Consumir 'catch'
 
         # Verificar el delimitador '('
         if self.tokens[self.current_token_index][0] != "Delimitador" or self.tokens[self.current_token_index][1] != "(":
@@ -573,9 +581,9 @@ class Parser:
             raise SyntaxError("Se esperaba 'switch', pero no hay más tokens.")
         
         token_type, token_value, _, _ = self.tokens[self.current_token_index]
-        if token_type != "PalabraClave" or token_value != "switch":
+        if token_type != "Palabra Reservada" or token_value != "switch":
             raise SyntaxError(f"Se esperaba 'switch', pero se encontró '{token_value}'.")
-        self.eat("PalabraClave")  # Consumir 'switch'
+        self.eat("Palabra Reservada")  # Consumir 'switch'
 
         # Verificar el delimitador '('
         if self.tokens[self.current_token_index][0] != "Delimitador" or self.tokens[self.current_token_index][1] != "(":
@@ -603,8 +611,8 @@ class Parser:
             token_type, token_value, _, _ = self.tokens[self.current_token_index]
             
             # Verificar si es un caso
-            if token_type == "PalabraClave" and token_value == "case":
-                self.eat("PalabraClave")  # Consumir 'case'
+            if token_type == "Palabra Reservada" and token_value == "case":
+                self.eat("Palabra Reservada")  # Consumir 'case'
                 
                 # Valor del caso
                 valor = self.parse_expresion()
@@ -618,16 +626,16 @@ class Parser:
                 instrucciones = self.parse_instrucciones()
 
                 # Verificar la palabra clave 'break'
-                if self.tokens[self.current_token_index][0] == "PalabraClave" and self.tokens[self.current_token_index][1] == "break":
-                    self.eat("PalabraClave")  # Consumir 'break'
+                if self.tokens[self.current_token_index][0] == "Palabra Reservada" and self.tokens[self.current_token_index][1] == "break":
+                    self.eat("Palabra Reservada")  # Consumir 'break'
                     self.eat("Delimitador")  # Consumir ';'
 
                 # Agregar el caso a la lista
                 casos.append((valor, instrucciones))
             
             # Verificar si es el caso por defecto
-            elif token_type == "PalabraClave" and token_value == "default":
-                self.eat("PalabraClave")  # Consumir 'default'
+            elif token_type == "Palabra Reservada" and token_value == "default":
+                self.eat("Palabra Reservada")  # Consumir 'default'
 
                 # Verificar el delimitador ':'
                 if self.tokens[self.current_token_index][0] != "Delimitador" or self.tokens[self.current_token_index][1] != ":":
@@ -680,20 +688,25 @@ class Parser:
         while self.current_token_index < len(self.tokens):
             token_type, token_value, _, _ = self.tokens[self.current_token_index]
             
+            # Verificar si es el cierre de bloque '}'
+            if token_type == "Delimitador" and token_value == "}":
+                break  # Salir del bucle si encontramos '}'
+            
             # Verificar si es un atributo (declaración de variable)
             if token_type == "Tipo de dato" or token_type == "Token de Acceso":
                 miembros.append(self.parse_declaracion_variable())  # Atributo
             
             # Verificar si es un método (declaración de función)
-            elif token_type == "Tipo de dato" or token_type == "Palabra Reservada" and token_value == "void":
+            elif token_type == "Tipo de dato" or token_type == "Token de Acceso" or (token_type == "Palabra Reservada" and token_value == "void"):
                 miembros.append(self.parse_declaracion_funcion())  # Método
             
-            # Verificar el delimitador de cierre del bloque '}'
-            elif token_type == "Delimitador" and token_value == "}":
-                break  # Salir del bucle
+            # Verificar si es un delimitador ';' (instrucción vacía)
+            elif token_type == "Delimitador" and token_value == ";":
+                self.eat("Delimitador")  # Consumir ';'
             
+            # Token inesperado
             else:
-                raise SyntaxError(f"Token inesperado '{token_value}' en la clase.")
+                raise SyntaxError(f"Token inesperado '{token_value}' en la clase. Se esperaba un atributo, método o '}}'.")
 
         # Verificar el delimitador de cierre del bloque '}'
         if self.tokens[self.current_token_index][0] != "Delimitador" or self.tokens[self.current_token_index][1] != "}":

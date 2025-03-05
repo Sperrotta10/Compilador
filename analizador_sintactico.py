@@ -879,7 +879,15 @@ class Parser:
 
 
 """
+
+VERIFICAR LOS ARCHIVOS DE PRUEBA 5 A PRUEBA 11:
+
+- PARA COMPROBAR QUE ANALIZADOR SINTACTICO FUNCIONA
+- VER SI FALTA OTRAS ESTRUCTURAS PARA ANALIZAR
+
 """
 tokens = [('Token de Acceso', 'public', 1, 1), ('Palabra Reservada', 'class', 1, 8), ('Identificador', 'MiClase', 1, 14), ('Delimitador', '{', 1, 22), ('Token de Acceso', 'private', 2, 5), ('Tipo de dato', 'int', 2, 13), ('Identificador', 'x', 2, 17), ('Delimitador', ';', 2, 18), ('Token de Acceso', 'public', 4, 5), ('Palabra Reservada', 'void', 4, 12), ('Identificador', 'metodo', 4, 17), ('Delimitador', '(', 4, 23), ('Delimitador', ')', 4, 24), ('Delimitador', '{', 4, 26), ('Identificador', 'x', 5, 9), ('Operador de Asignación', '=', 5, 11), ('Número', '10', 5, 13), ('Delimitador', ';', 5, 15), ('Delimitador', '}', 6, 5), ('Delimitador', '}', 7, 1)]
 parsear = Parser(tokens)
 parsear.parse()
+
+

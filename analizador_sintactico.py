@@ -446,22 +446,27 @@ class Parser:
         if "abstract" in modificadores and "static" in modificadores:
             raise SyntaxError("Error: Un método no puede ser 'abstract' y 'static' al mismo tiempo.")
         
+        
         # Verificar el tipo de retorno
         if self.current_token_index >= len(self.tokens):
             raise SyntaxError("Se esperaba un tipo de retorno, pero no hay más tokens.")
         
-        tipo_retorno = self.eat("Tipo de dato")  # Consumir el tipo de retorno
+        if self.tokens[self.current_token_index][0] == "Tipo de dato":
+
+            tipo_retorno = self.eat("Tipo de dato")  # Consumir el tipo de retorno (int, float, etc)
+        else:
+            tipo_retorno = self.eat("Palabra Reservada") # Consumir el tipo de retorno (void)
 
         # Verificar el nombre de la función
         nombre_funcion = self.eat("Identificador")  # Consumir el nombre de la función
 
-        print('Hola 0')
+        
         # Verificar el delimitador '('
         if self.tokens[self.current_token_index][0] != "Delimitador" or self.tokens[self.current_token_index][1] != "(":
             raise SyntaxError("Se esperaba '(' después del nombre de la función.")
         self.eat("Delimitador")  # Consumir '('
 
-        print('Hola 0.5')
+       
         # Parámetros (pueden ser múltiples, separados por comas)
         parametros = []
         while self.current_token_index < len(self.tokens):
@@ -482,13 +487,13 @@ class Parser:
             else:
                 raise SyntaxError(f"Error: Token inesperado '{token_value}' en la lista de parámetros.")
 
-        print("Hola 1")
+       
         # Verificar el delimitador ')'
         if self.tokens[self.current_token_index][0] != "Delimitador" or self.tokens[self.current_token_index][1] != ")":
             raise SyntaxError("Se esperaba ')' después de los parámetros.")
         self.eat("Delimitador")  # Consumir ')'
 
-        print("Hola 2")
+        
         # Verificar el delimitador de apertura del bloque '{'
         if self.tokens[self.current_token_index][0] != "Delimitador" or self.tokens[self.current_token_index][1] != "{":
             raise SyntaxError("Se esperaba '{' después de la declaración de la función.")
@@ -685,28 +690,39 @@ class Parser:
 
         # Atributos y métodos de la clase
         miembros = []
+
         while self.current_token_index < len(self.tokens):
             token_type, token_value, _, _ = self.tokens[self.current_token_index]
             
             # Verificar si es el cierre de bloque '}'
             if token_type == "Delimitador" and token_value == "}":
                 break  # Salir del bucle si encontramos '}'
+
+            # Recolectar modificadores (public, private, protected, static, etc.)
+            modificadores_miembro = self.parse_modificadores()
+
+            # Verificar el tipo de declaración basado en el siguiente token
+            if self.current_token_index < len(self.tokens):
+                token_type, token_value, _, _ = self.tokens[self.current_token_index]
             
-            # Verificar si es un atributo (declaración de variable)
-            if token_type == "Tipo de dato" or token_type == "Token de Acceso":
-                miembros.append(self.parse_declaracion_variable())  # Atributo
-            
-            # Verificar si es un método (declaración de función)
-            elif token_type == "Tipo de dato" or token_type == "Token de Acceso" or (token_type == "Palabra Reservada" and token_value == "void"):
-                miembros.append(self.parse_declaracion_funcion())  # Método
-            
-            # Verificar si es un delimitador ';' (instrucción vacía)
-            elif token_type == "Delimitador" and token_value == ";":
-                self.eat("Delimitador")  # Consumir ';'
-            
-            # Token inesperado
-            else:
-                raise SyntaxError(f"Token inesperado '{token_value}' en la clase. Se esperaba un atributo, método o '}}'.")
+                # 1. Declaración de variable (atributo)
+                if token_type == "Tipo de dato":
+                    miembros.append(self.parse_declaracion_variable(modificadores_miembro))  # Atributo
+                    print("cond 1")
+                
+                # 2. Declaración de función (método)
+                elif token_type == "Tipo de dato" or (token_type == "Palabra Reservada" and token_value == "void"):
+                    miembros.append(self.parse_declaracion_funcion(modificadores_miembro))  # Método
+                    print("cond 2")
+
+                # Verificar si es un delimitador ';' (instrucción vacía)
+                elif token_type == "Delimitador" and token_value == ";":
+                    self.eat("Delimitador")  # Consumir ';'
+                    print("cond 3")
+                
+                # 3. Token inesperado
+                else:
+                    raise SyntaxError(f"Token inesperado '{token_value}' en la clase. Se esperaba un atributo, método o '}}'.")
 
         # Verificar el delimitador de cierre del bloque '}'
         if self.tokens[self.current_token_index][0] != "Delimitador" or self.tokens[self.current_token_index][1] != "}":

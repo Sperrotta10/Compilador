@@ -185,7 +185,8 @@ class Parser:
             derecha = self.eat("Identificador") if self.tokens[self.current_token_index][0] == "Identificador" else self.eat("Número")
             return ASTNode("Expresion", operador, [ASTNode("Operando", izquierda, []), ASTNode("Operando", derecha, [])])
         
-        return ASTNode("Expresion", izquierda, [])
+        delimitador = self.eat("Delimitador")
+        return ASTNode("Expresion", izquierda, [ASTNode("Valor", delimitador, [])])
 
 
     def parse_declaracion_variable(self, modificadores=None):
@@ -229,13 +230,13 @@ class Parser:
                     operador_asignacion = self.eat("Operador de Asignación")  # Operador '='
                     valor = self.parse_expresion()
 
-                self.eat("Delimitador")  # Punto y coma ';'
+                delimitador = self.eat("Delimitador")  # Punto y coma ';'
                 
                 # Crear el nodo de la declaración de la variable con el operador de asignación y los modificadores
                 if operador_asignacion:
-                    return ASTNode("Declaracion", tipo_dato, [modificadores, ASTNode("Identificador", identificador, []), operador_asignacion, valor])
+                    return ASTNode("Declaracion", tipo_dato, [modificadores, ASTNode("Identificador", identificador, []), operador_asignacion, valor, delimitador])
                 else:
-                    return ASTNode("Declaracion", tipo_dato, [modificadores, ASTNode("Identificador", identificador, []), None])  # Sin valor si no hay asignación
+                    return ASTNode("Declaracion", tipo_dato, [modificadores, ASTNode("Identificador", identificador, []), delimitador])  # Sin valor si no hay asignación
             else:
                 raise SyntaxError("Error: Se esperaba un tipo de dato al inicio de la declaración.")
         else:

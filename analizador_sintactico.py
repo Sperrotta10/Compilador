@@ -8,17 +8,30 @@ class ASTNode:
         self.hijos = hijos or []
 
     def __str__(self):
-        if isinstance(self.hijos, list) and self.hijos:
-            hijos_str = ", ".join(str(hijo) for hijo in self.hijos)
-            return f"{self.tipo}: {self.valor}, Hijos: [{hijos_str}]"
-        elif isinstance(self.hijos, ASTNode):
-            return f"{self.tipo}: {self.valor}, Hijo: [{str(self.hijos)}]"
+        # Convertir el valor a una cadena legible
+        valor_str = str(self.valor) if self.valor is not None else "None"
+        
+        # Convertir los hijos a una cadena legible
+        if isinstance(self.hijos, list):
+            hijos_str = ", ".join(self._convertir_hijo_a_str(hijo) for hijo in self.hijos)
         else:
-            return f"{self.tipo}: {self.valor}"
+            hijos_str = self._convertir_hijo_a_str(self.hijos)
+        
+        # Devolver la representación del nodo
+        return f"{self.tipo}: {valor_str}, Hijos: [{hijos_str}]"
+
+    def _convertir_hijo_a_str(self, hijo):
+        """Convierte un hijo a una cadena legible."""
+        if isinstance(hijo, ASTNode):
+            return str(hijo)  # Llamada recursiva para nodos hijos
+        elif isinstance(hijo, list):
+            return ", ".join(self._convertir_hijo_a_str(item) for item in hijo)
+        else:
+            return str(hijo)  # Convertir otros tipos a cadena
 
     def graficar(self, parent_id=None, node_count=0, nodes=[], edges=[], level=0):
         node_id = node_count
-        nodes.append((node_id, f"{self.tipo}: {str(self.valor)}"))
+        nodes.append((node_id, f"{self.tipo}: {str(self.valor) if self.valor is not None else 'None'}"))
 
         if parent_id is not None:
             edges.append((parent_id, node_id))
@@ -30,13 +43,29 @@ class ASTNode:
 
         for hijo in self.hijos:
             if isinstance(hijo, ASTNode):
+                # Si el hijo es un nodo AST, lo procesamos normalmente
                 node_count = hijo.graficar(parent_id=node_id, node_count=node_count, nodes=nodes, edges=edges, level=level + 1)
+            elif isinstance(hijo, list):  
+                # Si el hijo es una lista, iteramos sobre sus elementos
+                for subhijo in hijo:
+                    if isinstance(subhijo, ASTNode):
+                        node_count = subhijo.graficar(parent_id=node_id, node_count=node_count, nodes=nodes, edges=edges, level=level + 1)
+                    else:
+                        # Si el subhijo no es un nodo AST, lo agregamos como valor
+                        valor_str = str(subhijo) if subhijo is not None else "None"
+                        nodes.append((node_count, f"Valor: {valor_str}"))
+                        edges.append((node_id, node_count))
+                        node_count += 1
             else:
-                nodes.append((node_count, f"Valor: {hijo}"))
+                # Si el hijo es un valor primitivo (string, número, etc.), lo agregamos directamente
+                valor_str = str(hijo) if hijo is not None else "None"
+                nodes.append((node_count, f"Valor: {valor_str}"))
                 edges.append((node_id, node_count))
                 node_count += 1
 
         return node_count
+
+
 
     def graficar_mpl(self, output_filename="arbol_sintactico.png"):
         nodes = []
@@ -65,7 +94,7 @@ class ASTNode:
 
         # Guardar la imagen
         plt.savefig(output_filename, format="PNG")
-        #plt.show()
+        plt.show()
         print(f"Árbol guardado como imagen: {output_filename}")
 
 
@@ -829,6 +858,8 @@ class Parser:
             ast = self.parse_instrucciones()
 
             print("AST Generado:", ast)
+            print("")
+            print(ast.hijos)
 
             # Comprobamos si hemos procesado todos los tokens
             if self.current_token_index < len(self.tokens):

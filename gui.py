@@ -1,7 +1,7 @@
 import tkinter as tk
 from tkinter import scrolledtext, font, filedialog
 from analizador_lexico import lexer  
-from analizador_sintactico import Parser
+#from analizador_sintactico import Parser
 
 def analyze_code():
     output_text.config(state='normal')

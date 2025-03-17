@@ -36,8 +36,8 @@ def main(page: ft.Page):
             if not page.page_l:
                 page.page_l = Lexico_page(page, page.file_content)
             
+            page.page_l.update_code(page.file_content)  # Actualizar el contenido 
             content = page.page_l.buil_page()
-            page.file_content = page.page_l.file_content
             return content
         
         elif page_name == "sintactico":

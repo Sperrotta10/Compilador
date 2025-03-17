@@ -1,5 +1,7 @@
 import flet as ft
 from pages.Home import Home_page
+from pages.Lexico import Lexico_page
+from pages.Sintactico import Sintactico_page
 from Components.header import Header
 
 def main(page: ft.Page):
@@ -15,13 +17,19 @@ def main(page: ft.Page):
     def build_page_content(page_name, page):
         if page_name == "home":
 
-            page = Home_page(page)
-            return page.buil_page()
+            page_h = Home_page(page)
+            return page_h.buil_page()
 
         elif page_name == "lexico":
-            return ft.Text("Página de Análisis Léxico")
+            
+            page_l = Lexico_page(page)
+            return page_l.buil_page()
+        
         elif page_name == "sintactico":
-            return ft.Text("Página de Análisis Sintáctico")
+            
+            page_s = Sintactico_page(page)
+            return page_s.buil_page()
+
         elif page_name == "semantico":
             return ft.Text("Página de Análisis Semántico")
         elif page_name == "cod_medio":

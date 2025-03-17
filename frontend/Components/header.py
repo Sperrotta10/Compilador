@@ -73,10 +73,14 @@ class Header:
                 )
     
     def header_componet(self):
-        return ft.Row(
-            controls=[
-                self.logo_name(),
-                self.barra_navegacion()
-            ],
-            alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
+        padding_top = 10 if self.page.current_page != "home" else 0
+        return ft.Container(
+            content=ft.Row(
+                controls=[
+                    self.logo_name(),
+                    self.barra_navegacion()
+                ],
+                alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
+            ),
+            padding=ft.padding.only(top=padding_top)
         )

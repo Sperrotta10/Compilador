@@ -6,6 +6,9 @@ def main(page: ft.Page):
     page.padding = 20
     page.scroll = True  # Habilitar scroll en la página
 
+    # Estado de la página actual
+    page.current_page = "home"
+
     # Función para construir el encabezado
     def build_header():
         return ft.Row(
@@ -19,13 +22,55 @@ def main(page: ft.Page):
                 ),
                 ft.Row(
                     controls=[
-                        ft.ElevatedButton("Home", icon=ft.icons.HOME, bgcolor="#D9D9D9", color="black"),
-                        ft.ElevatedButton("Lexico", icon=ft.icons.TABLE_CHART, bgcolor="#D9D9D9", color="black"),
-                        ft.ElevatedButton("Sintactico", icon=ft.icons.PARK_SHARP, bgcolor="#D9D9D9", color="black"),
-                        ft.ElevatedButton("Semantico", icon=ft.icons.LIGHTBULB, bgcolor="#D9D9D9", color="black"),
-                        ft.ElevatedButton("Cod medio", icon=ft.icons.CODE_OUTLINED, bgcolor="#D9D9D9", color="black"),
-                        ft.ElevatedButton("Optimizacion", icon=ft.icons.SETTINGS, bgcolor="#D9D9D9", color="black"),
-                        ft.ElevatedButton("Cod Final", icon=ft.icons.DONE_ALL, bgcolor="#D9D9D9", color="black")
+                        ft.ElevatedButton(
+                            "Home", 
+                            icon=ft.icons.HOME, 
+                            bgcolor="#AAAAAA" if page.current_page == "home" else "#D9D9D9", 
+                            color="white" if page.current_page == "home" else "black", 
+                            on_click=lambda e: navigate_to("home")
+                        ),
+                        ft.ElevatedButton(
+                            "Lexico", 
+                            icon=ft.icons.TABLE_CHART, 
+                            bgcolor="#AAAAAA" if page.current_page == "lexico" else "#D9D9D9", 
+                            color="white" if page.current_page == "lexico" else "black", 
+                            on_click=lambda e: navigate_to("lexico")
+                        ),
+                        ft.ElevatedButton(
+                            "Sintactico", 
+                            icon=ft.icons.PARK_SHARP, 
+                            bgcolor="#AAAAAA" if page.current_page == "sintactico" else "#D9D9D9", 
+                            color="white" if page.current_page == "sintactico" else "black", 
+                            on_click=lambda e: navigate_to("sintactico")
+                        ),
+                        ft.ElevatedButton(
+                            "Semantico", 
+                            icon=ft.icons.LIGHTBULB, 
+                            bgcolor="#AAAAAA" if page.current_page == "semantico" else "#D9D9D9", 
+                            color="white" if page.current_page == "semantico" else "black", 
+                            on_click=lambda e: navigate_to("semantico")
+                        ),
+                        ft.ElevatedButton(
+                            "Cod medio", 
+                            icon=ft.icons.CODE_OUTLINED, 
+                            bgcolor="#AAAAAA" if page.current_page == "cod_medio" else "#D9D9D9", 
+                            color="white" if page.current_page == "cod_medio" else "black", 
+                            on_click=lambda e: navigate_to("cod_medio")
+                        ),
+                        ft.ElevatedButton(
+                            "Optimizacion", 
+                            icon=ft.icons.SETTINGS, 
+                            bgcolor="#AAAAAA" if page.current_page == "optimizacion" else "#D9D9D9", 
+                            color="white" if page.current_page == "optimizacion" else "black", 
+                            on_click=lambda e: navigate_to("optimizacion")
+                        ),
+                        ft.ElevatedButton(
+                            "Cod Final", 
+                            icon=ft.icons.DONE_ALL, 
+                            bgcolor="#AAAAAA" if page.current_page == "cod_final" else "#D9D9D9", 
+                            color="white" if page.current_page == "cod_final" else "black", 
+                            on_click=lambda e: navigate_to("cod_final")
+                        )
                     ],
                     alignment=ft.MainAxisAlignment.END,
                     wrap=page.width < 800,  # Envolver botones en varias filas si la ventana es pequeña
@@ -53,24 +98,16 @@ def main(page: ft.Page):
             height=page.width * 0.315 if page.width < 1270 else 500,
         )
 
-    # Función para actualizar el diseño
-    def update_layout(e):
-        # Reconstruir los controles
-        header = build_header()
-        code_container = build_code_container()
-
-        # Limpiar la página y agregar los controles actualizados
-        page.clean()
-        page.add(
-            header,
-            ft.Divider(thickness=1, color="black"),
-            ft.Column(
+    # Función para construir contenido específico de cada página
+    def build_page_content(page_name):
+        if page_name == "home":
+            return ft.Column(
                 controls=[
                     ft.Container(
                         content=ft.Text("Código Java:", weight=ft.FontWeight.BOLD, color="black"),
                         padding=ft.padding.only(top=20)
                     ),
-                    ft.Container(content=code_container, padding=ft.padding.only(bottom=20)),
+                    ft.Container(content=build_code_container(), padding=ft.padding.only(bottom=20)),
                     ft.Row(
                         controls=[
                             ft.ElevatedButton("Cargar Archivo", bgcolor="#64A6F5", color="white", width=200, height=50),
@@ -83,12 +120,44 @@ def main(page: ft.Page):
                 alignment=ft.MainAxisAlignment.CENTER,
                 horizontal_alignment=ft.CrossAxisAlignment.CENTER,
             )
+        elif page_name == "lexico":
+            return ft.Text("Página de Análisis Léxico")
+        elif page_name == "sintactico":
+            return ft.Text("Página de Análisis Sintáctico")
+        elif page_name == "semantico":
+            return ft.Text("Página de Análisis Semántico")
+        elif page_name == "cod_medio":
+            return ft.Text("Página de Código Intermedio")
+        elif page_name == "optimizacion":
+            return ft.Text("Página de Optimización")
+        elif page_name == "cod_final":
+            return ft.Text("Página de Código Final")
+
+    # Función para navegar entre páginas
+    def navigate_to(page_name):
+        page.current_page = page_name
+        page.clean()
+        page.add(
+            build_header(),
+            ft.Divider(thickness=1, color="black"),
+            build_page_content(page_name)
         )
+        page.update()
+
+    # Función para actualizar el diseño al cambiar el tamaño de la ventana
+    def update_layout(e):
+        page.clean()
+        page.add(
+            build_header(),
+            ft.Divider(thickness=1, color="black"),
+            build_page_content(page.current_page)
+        )
+        page.update()
 
     # Escuchar cambios en el tamaño de la ventana
-    page.on_resize = update_layout
+    page.on_resized = update_layout
 
     # Actualizar el diseño al iniciar la aplicación
-    update_layout(None)
+    navigate_to("home")
 
 ft.app(target=main)

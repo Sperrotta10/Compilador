@@ -1,31 +1,66 @@
 import flet as ft
-from Components.textArea import TextArea
+from backend.analizador_lexico import lexer
+
 
 class Lexico_page():
-    def __init__(self, page, file_content=""):
+    def __init__(self, page, code=""):
         self.page = page
-        self.file_content = file_content  # Guardar el contenido del archivo
+        self.code = code  # Guardar el contenido del archivo
+        self.tokens = []
+        self.table = ft.Column()  # Control para la tabla
 
-    def buil_page(self):
+    def update_code(self, code):
+        self.code = code
+        self.tokens = lexer(self.code)  # Obtener los tokens
+        print("Tokens obtenidos:", self.tokens)  # Verificar los tokens en consola
+        self.update_table()  # Actualizar la tabla con los tokens
 
-        component = TextArea(self.page)
-
-        return ft.Column(
+    def update_table(self):
+        self.table.controls.clear()  # Limpiar la tabla
+        
+        # Encabezado de la tabla
+        table_controls = [
+            ft.Text("Análisis Léxico:", weight=ft.FontWeight.BOLD, color="black"),
+            ft.Row(
                 controls=[
-                    ft.Container(
-                        content=ft.Text("Tabla de tokens:", weight=ft.FontWeight.BOLD, color="black"),
-                        padding=ft.padding.only(top=20)
-                    ),
-                    ft.Container(content=component.textArea_component(), padding=ft.padding.only(bottom=20)),
+                    ft.Text("Tipos de Tokens", width=200,weight=ft.FontWeight.BOLD, color="black"),
+                    ft.Text("Valores", width=200,weight=ft.FontWeight.BOLD, color="black"),
+                    ft.Text("Posiciones (Línea, Columna)",weight=ft.FontWeight.BOLD, width=200, color="black"),
+                ],
+                alignment=ft.MainAxisAlignment.SPACE_BETWEEN
+            ),
+            ft.Divider(thickness=1, color="black"),
+        ]
+
+        # Agregar los tokens obtenidos
+        if self.tokens:
+            for token_type, value, line, column in self.tokens:
+                table_controls.append(
                     ft.Row(
                         controls=[
-                            ft.ElevatedButton("Cargar Archivo", bgcolor="#64A6F5", color="white", width=200, height=50),
-                            ft.ElevatedButton("Analizar Código", bgcolor="#64A6F5", color="white", width=200, height=50)
+                            ft.Text(token_type, width=200, weight=ft.FontWeight.BOLD, color="black"),
+                            ft.Text(value, width=200, weight=ft.FontWeight.BOLD, color="black"),
+                            ft.Text(f"({line}, {column})", width=200, weight=ft.FontWeight.BOLD, color="black"),
                         ],
-                        alignment=ft.MainAxisAlignment.CENTER,
-                        spacing=80,
+                        alignment=ft.MainAxisAlignment.SPACE_BETWEEN
                     )
-                ],
-                alignment=ft.MainAxisAlignment.CENTER,
-                horizontal_alignment=ft.CrossAxisAlignment.CENTER,
-            )
+                )
+        else:
+            table_controls.append(ft.Text("No se encontraron tokens", color="red"))
+
+        # Actualizar la tabla y refrescar la página
+        self.table.controls.extend(table_controls)
+        self.page.update()
+
+    def buil_page(self):
+        # Asegurar que la tabla esté actualizada al construir la página
+        self.update_table()
+
+        return ft.Column(
+            controls=[
+                self.table  # Mostrar la tabla de tokens aquí
+            ],
+            alignment=ft.MainAxisAlignment.START,
+            spacing=10,
+            scroll="adaptive"  # Permitir scroll si la tabla crece demasiado
+        )

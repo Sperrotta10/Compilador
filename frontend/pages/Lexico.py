@@ -2,8 +2,9 @@ import flet as ft
 from Components.textArea import TextArea
 
 class Lexico_page():
-    def __init__(self, page):
+    def __init__(self, page, file_content=""):
         self.page = page
+        self.file_content = file_content  # Guardar el contenido del archivo
 
     def buil_page(self):
 

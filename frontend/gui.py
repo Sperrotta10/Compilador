@@ -13,17 +13,32 @@ def main(page: ft.Page):
     # Estado de la página actual
     page.current_page = "home"
 
+    page.file_content = ""  # Inicializar el contenido del archivo
+
+    # Instancia única de Home_page, Lexico_page, Sintactico_page
+    page.page_h = None
+    page.page_l = None
+    page.page_s = None
+
     # Función para construir contenido específico de cada página
     def build_page_content(page_name, page):
         if page_name == "home":
 
-            page_h = Home_page(page)
-            return page_h.buil_page()
+            if not page.page_h:
+                page.page_h = Home_page(page, page.file_content)
+
+            content = page.page_h.buil_page()
+            page.file_content = page.page_h.file_content  # Actualizar el contenido del archivo
+            return content
 
         elif page_name == "lexico":
             
-            page_l = Lexico_page(page)
-            return page_l.buil_page()
+            if not page.page_l:
+                page.page_l = Lexico_page(page, page.file_content)
+            
+            content = page.page_l.buil_page()
+            page.file_content = page.page_l.file_content
+            return content
         
         elif page_name == "sintactico":
             

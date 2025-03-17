@@ -18,6 +18,9 @@ class Home_page():
             self.text_field.value = self.file_content
             print("Asignando contenido al TextField:", self.file_content)
 
+        if not self.page.controls:  # Agregar el FilePicker solo si no hay controles en la página
+            self.page.add(self.file_picker)
+
         return ft.Column(
                 controls=[
                     ft.Container(

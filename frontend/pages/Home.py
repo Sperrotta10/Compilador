@@ -31,7 +31,7 @@ class Home_page():
                     ft.Row(
                         controls=[
                             ft.ElevatedButton("Cargar Archivo", bgcolor="#64A6F5", color="white", width=200, height=50, on_click=self.load_file),
-                            ft.ElevatedButton("Analizar Código", bgcolor="#64A6F5", color="white", width=200, height=50)
+                            ft.ElevatedButton("Analizar Código", bgcolor="#64A6F5", color="white", width=200, height=50, on_click=self.analizar)
                         ],
                         alignment=ft.MainAxisAlignment.CENTER,
                         spacing=80,
@@ -57,4 +57,7 @@ class Home_page():
                     print("Página actualizada")
             else:
                 print("Por favor, seleccione un archivo .java")
+
+    def analizar(self, e):
+        self.page.file_content = self.file_content  # Actualizar el contenido del archivo
 

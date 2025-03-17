@@ -3,16 +3,17 @@ import flet as ft
 class TextArea():
     def __init__(self, page):
         self.page = page
-
-    def textArea_component(self):
-        return ft.Container(
-            content=ft.TextField(
+        self.textField = ft.TextField(
                 multiline=True,
                 bgcolor="white",
                 color="black",
                 border_radius=0,
                 border=None,
-            ),
+                )
+
+    def textArea_component(self):
+        return ft.Container(
+            content= self.textField,
             bgcolor="white",
             border_radius=0,
             border=None,

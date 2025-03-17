@@ -2,16 +2,21 @@ import flet as ft
 from Components.textArea import TextArea
 
 class Home_page():
-    def __init__(self, page):
+    def __init__(self, page, file_content=""):
         self.page = page
         self.text_field = None
         self.file_picker = ft.FilePicker(on_result=self.read_file)
         self.page.add(self.file_picker)  # Agregar el FilePicker a la página
+        self.file_content = file_content  # Guardar el contenido del archivo
 
     def buil_page(self):
 
         component = TextArea(self.page)
         self.text_field = component.textField
+
+        if self.file_content:  # Si hay contenido guardado, asignarlo al TextField
+            self.text_field.value = self.file_content
+            print("Asignando contenido al TextField:", self.file_content)
 
         return ft.Column(
                 controls=[
@@ -41,9 +46,9 @@ class Home_page():
             file_path = e.files[0].path
             if file_path.endswith(".java"):  # Verificar si el archivo es .java
                 with open(file_path, "r") as file:
-                    code = file.read()
-                    print(code)
-                    self.text_field.value = code
+                    self.file_content = file.read()  # Guardar el contenido 
+                    print(self.file_content)
+                    self.text_field.value = self.file_content
                     print("Texto asignado al TextField")
                     self.page.update()
                     print("Página actualizada")

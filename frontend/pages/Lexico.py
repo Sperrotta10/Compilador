@@ -12,8 +12,6 @@ class Lexico_page():
     def update_code(self, code):
         self.code = code
         self.tokens = lexer(self.code)  # Obtener los tokens
-        print("Tokens obtenidos:", self.tokens)  # Verificar los tokens en consola
-        self.update_table()  # Actualizar la tabla con los tokens
 
     def update_table(self):
         self.table.controls.clear()  # Limpiar la tabla

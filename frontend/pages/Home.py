@@ -30,8 +30,8 @@ class Home_page():
                     ft.Container(content=component.textArea_component(), padding=ft.padding.only(bottom=20)),
                     ft.Row(
                         controls=[
-                            ft.ElevatedButton("Cargar Archivo", bgcolor="#64A6F5", color="white", width=200, height=50, on_click=self.load_file),
-                            ft.ElevatedButton("Analizar Código", bgcolor="#64A6F5", color="white", width=200, height=50, on_click=self.analizar)
+                            ft.ElevatedButton("Cargar Archivo", bgcolor="#64A6F5", color="white", width=200, height=50, on_click=self.on_button_click(self.load_file), on_hover=self.on_hover),
+                            ft.ElevatedButton("Analizar Código", bgcolor="#64A6F5", color="white", width=200, height=50, on_click=self.on_button_click(self.analizar), on_hover=self.on_hover)
                         ],
                         alignment=ft.MainAxisAlignment.CENTER,
                         spacing=80,
@@ -60,4 +60,25 @@ class Home_page():
 
     def analizar(self, e):
         self.page.file_content = self.file_content  # Actualizar el contenido del archivo
+
+    def on_hover(self,event):
+        # Cambiar estilo cuando el mouse esté sobre el botón
+        event.control.bgcolor = "#3D8BF4" if event.data == "true" else "#64A6F5"
+        event.control.update()
+
+    def on_button_click(self, original_func):
+        """Funcion para aplicar el efecto de pulsación antes de ejecutar la función original."""
+        def wrapper(e):
+            e.control.bgcolor = "#2C6BA3"  # Color cuando el botón es presionado
+            e.control.update()
+            e.page.update()
+
+            # Llamar a la función original
+            original_func(e)
+
+            # Volver al color original después de un pequeño retraso
+            e.control.bgcolor = "#64A6F5"
+            e.control.update()
+
+        return wrapper
 

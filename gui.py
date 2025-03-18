@@ -1,6 +1,6 @@
 import tkinter as tk
 from tkinter import scrolledtext, font, filedialog
-from analizador_lexico import lexer  
+from frontend.backend.analizador_lexico import lexer  
 #from analizador_sintactico import Parser
 
 def analyze_code():

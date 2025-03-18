@@ -18,6 +18,9 @@ class Home_page():
             self.text_field.value = self.file_content
             print("Asignando contenido al TextField:", self.file_content)
 
+        # Guardar el contenido del TextField cada vez que se escriba
+        self.text_field.on_change = self.update_file_content
+
         if not self.page.controls:  # Agregar el FilePicker solo si no hay controles en la página
             self.page.add(self.file_picker)
 
@@ -59,7 +62,11 @@ class Home_page():
                 print("Por favor, seleccione un archivo .java")
 
     def analizar(self, e):
-        self.page.file_content = self.file_content  # Actualizar el contenido del archivo
+        self.page.file_content = self.text_field.value  # Actualizar el contenido del archivo
+
+    def update_file_content(self, e):
+        # Guardamos el contenido actual del TextField en file_content
+        self.file_content = self.text_field.value
 
     def on_hover(self,event):
         # Cambiar estilo cuando el mouse esté sobre el botón

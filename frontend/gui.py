@@ -1,7 +1,7 @@
 import flet as ft
 from pages.Home import Home_page
 from pages.Lexico import Lexico_page
-from pages.Sintactico import Sintactico_page
+from pages.sintactico import Sintactico_page
 from Components.header import Header
 
 def main(page: ft.Page):
@@ -41,9 +41,16 @@ def main(page: ft.Page):
             return content
         
         elif page_name == "sintactico":
-            
-            page_s = Sintactico_page(page)
-            return page_s.buil_page()
+            if not page.page_l:
+                page.page_l = Lexico_page(page, page.file_content)  # Asegurar que Lexico_page está inicializado
+
+            page.page_l.update_code(page.file_content)  # Asegurar que los tokens están actualizados
+
+            # Crear Sintactico_page pasando la instancia de Lexico_page
+            sintactico_page = Sintactico_page(page, page.page_l)
+            content = sintactico_page.buil_page()
+            return content
+
 
         elif page_name == "semantico":
             return ft.Text("Página de Análisis Semántico")

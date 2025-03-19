@@ -12,6 +12,9 @@ class Lexico_page():
     def update_code(self, code):
         self.code = code
         self.tokens = lexer(self.code)  # Obtener los tokens
+    
+    def get_tokens(self):
+        return self.tokens
 
     def update_table(self):
         self.table.controls.clear()  # Limpiar la tabla

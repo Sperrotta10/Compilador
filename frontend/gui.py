@@ -14,6 +14,7 @@ def main(page: ft.Page):
     page.current_page = "home"
 
     page.file_content = ""  # Inicializar el contenido del archivo
+    page.tokens = None # Inicializar lista de tokens
 
     # Instancia única de Home_page, Lexico_page, Sintactico_page
     page.page_h = None
@@ -37,6 +38,7 @@ def main(page: ft.Page):
                 page.page_l = Lexico_page(page, page.file_content)
             
             page.page_l.update_code(page.file_content)  # Actualizar el contenido 
+            page.tokens = page.page_l.tokens
             content = page.page_l.buil_page()
             return content
         

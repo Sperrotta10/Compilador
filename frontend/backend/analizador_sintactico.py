@@ -150,11 +150,11 @@ class Parser:
         if self.current_token_index < len(self.tokens):
             token_type, token_value, _, _ = self.tokens[self.current_token_index]
 
-            # Imprimir el token actual para ver qué está siendo procesado
-            print(f"Procesando token {self.current_token_index}: {token_type}, {token_value}")
 
             if token_type == expected_type:
                 self.current_token_index += 1
+                # Imprimir el token actual para ver qué está siendo procesado
+                print(f"Procesando token {self.current_token_index}: {token_type}, {token_value}")
                 return token_value
             else:
                 raise SyntaxError(f"Error: Se esperaba '{expected_type}' pero se encontró '{token_value}'")
@@ -229,11 +229,13 @@ class Parser:
                     operador_asignacion = self.eat("Operador de Asignación")  # Operador '='
                     valor = self.parse_expresion()
 
-                delimitador = self.eat("Delimitador")  # Punto y coma ';'
+                else:
+
+                    delimitador = self.eat("Delimitador")  # Punto y coma ';'
                 
                 # Crear el nodo de la declaración de la variable con el operador de asignación y los modificadores
                 if operador_asignacion:
-                    return ASTNode("Declaracion", tipo_dato, [modificadores, ASTNode("Identificador", identificador, []), operador_asignacion, valor, delimitador])
+                    return ASTNode("Declaracion", tipo_dato, [modificadores, ASTNode("Identificador", identificador, []), operador_asignacion, valor])
                 else:
                     return ASTNode("Declaracion", tipo_dato, [modificadores, ASTNode("Identificador", identificador, []), delimitador])  # Sin valor si no hay asignación
             else:
@@ -245,6 +247,7 @@ class Parser:
     def parse_sentencia_if(self):
         """Analiza una sentencia 'if' con su bloque de instrucciones y opcionales 'else' o 'else if'."""
         
+        print("Hola 0")
         if self.current_token_index >= len(self.tokens):
             raise SyntaxError("Se esperaba 'if', pero no hay más tokens.")
         
@@ -252,6 +255,7 @@ class Parser:
         if token_type != "Condicional" or token_value != "if":
             raise SyntaxError(f"Se esperaba 'if', pero se encontró '{token_value}'.")
         
+        print("Hola")
         self.eat("Condicional")  # Consumimos el 'if'
 
         # 1. Verificamos el paréntesis de apertura '('
@@ -800,6 +804,7 @@ class Parser:
                 
                 # 1. Declaración de variable
                 if token_type == "Tipo de dato":
+                    print("Inicio")
                     instrucciones.append(self.parse_declaracion_variable(modificadores))  # Declaración de variable
                 
                 # 2. Declaración de función
@@ -812,6 +817,7 @@ class Parser:
                 
                 # 4. Sentencia if
                 elif token_type == "Condicional" and token_value == "if":
+                    print("Entro")
                     instrucciones.append(self.parse_sentencia_if())  # Sentencia if
                 
                 # 5. Sentencia while
@@ -885,5 +891,6 @@ VERIFICAR LOS ARCHIVOS DE PRUEBA 5 A PRUEBA 11:
 - VER SI FALTA OTRAS ESTRUCTURAS PARA ANALIZAR
 
 """
+
 
 

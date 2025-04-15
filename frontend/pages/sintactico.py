@@ -1,5 +1,6 @@
 import flet as ft
 import os
+import time
 from backend.analizador_sintactico import Parser
 
 class Sintactico_page():
@@ -14,7 +15,8 @@ class Sintactico_page():
         self.zoom_factor = 1.0  # Factor de zoom inicial
 
         # Imagen del árbol sintáctico
-        self.image = ft.Image(src="", width=500, height=400,visible=False)
+        self.image = None
+        self.generated_image_path = None
 
         # Contenedor con detector de gestos para mover y hacer zoom en la imagen
         self.image_container = ft.GestureDetector(
@@ -38,6 +40,16 @@ class Sintactico_page():
             on_scale_update=self.zoom_imagen
         )
 
+
+    def limpiar_imagenes(self):
+        """Eliminar imágenes generadas cuando el usuario navega o cierra la página"""
+        if self.generated_image_path and os.path.exists(self.generated_image_path):
+            try:
+                os.remove(self.generated_image_path)
+                print(f"🗑 Imagen eliminada: {self.generated_image_path}")
+            except Exception as e:
+                print(f"❌ Error al eliminar la imagen: {e}")
+
     def analizar_codigo(self, e):
         """Función que se ejecuta cuando el usuario presiona 'Analizar Código'"""
         tokens = self.lexico_page.get_tokens()
@@ -45,24 +57,47 @@ class Sintactico_page():
 
         if tokens:
             try:
+                # Generar un nombre único para la imagen
+                timestamp = int(time.time())
+                image_path = f"arbol_sintactico_{timestamp}.png"
+
+                self.limpiar_imagenes()
+
                 parsear = Parser(tokens)  # Crear el analizador sintáctico
-                parsear.parse()
+                ast = parsear.parse()  # Asumimos que el parseo devuelve un AST
+
                 print("✅ Análisis sintáctico exitoso.")
 
-                # Ruta de la imagen generada
-                image_path = "arbol_sintactico.png"
+                # Verificar si la imagen fue creada y su ruta
+                self.generated_image_path = ast.graficar_mpl(output_filename=image_path)
 
-                # Verificar si la imagen existe antes de actualizar la interfaz
-                if os.path.exists(image_path):
-                    self.image.src = image_path
-                    self.image.visible = True
+                if os.path.exists(self.generated_image_path):
+                    self.image = ft.Image(
+                        src=self.generated_image_path,
+                        width=int(500 * self.zoom_factor),
+                        height=int(400 * self.zoom_factor),
+                        visible=True
+                    )
+
+                    self.image_container.content.controls[0] = ft.Container(
+                        content=self.image,
+                        left=self.offset_x,
+                        top=self.offset_y,
+                        alignment=ft.alignment.center,
+                        border=ft.border.all(1, "gray"),
+                        border_radius=10,
+                        bgcolor="#f8f8f8",
+                        clip_behavior=ft.ClipBehavior.HARD_EDGE,
+                    )
+
+                    self.image_container.update()
+
                     self.result_text.value = "✅ Análisis sintáctico exitoso. Árbol generado."
                     self.result_text.color = "green"
                 else:
-                    self.image.src = ""
+                    self.image.visible = False
                     self.result_text.value = "⚠ Análisis completado, pero no se encontró la imagen."
                     self.result_text.color = "orange"
-                    self.image.visible = False
 
             except Exception as ex:
                 print("❌ Error en el análisis sintáctico:", ex)
@@ -74,15 +109,15 @@ class Sintactico_page():
             self.result_text.value = "⚠ No se encontraron tokens para analizar."
             self.result_text.color = "orange"
 
-        self.image.update()
         self.page.update()
+
 
     def zoom_in(self, e=None):
         """Aumenta el zoom de la imagen"""
         self.zoom_factor += 0.2
         self.image.width = int(500 * self.zoom_factor)
         self.image.height = int(400 * self.zoom_factor)
-        self.image.update()
+        #self.image.update()
         self.page.update()
 
     def zoom_out(self, e=None):
@@ -115,6 +150,7 @@ class Sintactico_page():
         self.page.update()
 
     def buil_page(self):
+        
         return ft.Column(
             controls=[
                 ft.Container(

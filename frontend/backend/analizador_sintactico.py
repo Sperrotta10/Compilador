@@ -1,5 +1,6 @@
 import matplotlib.pyplot as plt
 import networkx as nx
+import time
 
 class ASTNode:
     def __init__(self, tipo, valor=None, hijos=None):
@@ -67,7 +68,12 @@ class ASTNode:
 
 
 
-    def graficar_mpl(self, output_filename="arbol_sintactico.png"):
+    def graficar_mpl(self, output_filename=None):
+
+        if output_filename is None:
+            # Generar un nombre único utilizando el timestamp actual
+            output_filename = f"arbol_sintactico_{int(time.time())}.png"
+
         nodes = []
         edges = []
         self.graficar(node_count=0, nodes=nodes, edges=edges)
@@ -95,6 +101,7 @@ class ASTNode:
         # Guardar la imagen
         plt.savefig(output_filename, format="PNG")
         print(f"Árbol guardado como imagen: {output_filename}")
+        return output_filename  # Retornar el nombre del archivo generado
 
 
     def crear_layout_arbol(self, G, nodes, edges):

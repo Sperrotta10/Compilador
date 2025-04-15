@@ -47,10 +47,9 @@ def main(page: ft.Page):
                 page.page_l = Lexico_page(page, page.file_content)  # Asegurar que Lexico_page está inicializado
 
             page.page_l.update_code(page.file_content)  # Asegurar que los tokens están actualizados
+            page.page_s =  Sintactico_page(page, page.page_l)            
 
-            # Crear Sintactico_page pasando la instancia de Lexico_page
-            sintactico_page = Sintactico_page(page, page.page_l)
-            content = sintactico_page.buil_page()
+            content = page.page_s.buil_page()
             return content
 
 

@@ -6,6 +6,7 @@ from backend.analizador_sintactico import Parser
 class Sintactico_page():
     def __init__(self, page, lexico_page):
         self.page = page
+        self.ast = None  # ← AQUÍ guardas el AST
         self.lexico_page = lexico_page  # Instancia de Lexico_page
         self.result_text = ft.Text("", color="black")  # Mensaje de resultado del análisis
 
@@ -64,12 +65,12 @@ class Sintactico_page():
                 self.limpiar_imagenes()
 
                 parsear = Parser(tokens)  # Crear el analizador sintáctico
-                ast = parsear.parse()  # Asumimos que el parseo devuelve un AST
+                self.ast = parsear.parse()  # Asumimos que el parseo devuelve un AST
 
                 print("✅ Análisis sintáctico exitoso.")
 
                 # Verificar si la imagen fue creada y su ruta
-                self.generated_image_path = ast.graficar_mpl(output_filename=image_path)
+                self.generated_image_path = self.ast.graficar_mpl(output_filename=image_path)
 
                 if os.path.exists(self.generated_image_path):
                     self.image = ft.Image(

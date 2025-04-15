@@ -10,6 +10,10 @@ class CodFinal_page:
         self.generated_code = ""
         self.generate_code()
 
+        # Agregar FilePicker al inicializar
+        self.file_picker = ft.FilePicker()
+        self.page.overlay.append(self.file_picker)
+
     def generate_code(self):
         """Generate Python code from the AST."""
         if self.ast:
@@ -31,14 +35,18 @@ class CodFinal_page:
             read_only=True,
             width=800,
             border_color=ft.colors.GREY_400,
-            bgcolor=ft.colors.WHITE
+            bgcolor=ft.colors.WHITE,
+            color="black"
         )
-        
+
         # Copy button
         def copy_to_clipboard(e):
-            self.page.clipboard.set_text(self.generated_code)
-            self.page.snack_bar = ft.SnackBar(ft.Text("Código copiado al portapapeles"))
-            self.page.snack_bar.open = True
+            self.page.set_clipboard(self.generated_code)
+            self.page.snack_bar = ft.SnackBar(
+                content=ft.Text("✅ Código copiado al portapapeles"),
+                open=True,
+                duration=2000
+            )
             self.page.update()
         
         copy_button = ft.ElevatedButton(
@@ -46,18 +54,45 @@ class CodFinal_page:
             on_click=copy_to_clipboard,
             icon=ft.icons.COPY
         )
-        
-        # Save button
+
+        # Save button usando FilePicker
         def save_to_file(e):
-            # This would typically open a file dialog, but for Flet web we'll use download
-            self.page.launch_url(f"data:text/plain;charset=utf-8,{self.generated_code}")
+            # Llamamos al método para mostrar el cuadro de diálogo de guardar
+            self.file_picker.save_file(
+                dialog_title="Guardar como archivo .py",
+                file_name="codigo_generado.py",
+                allowed_extensions=["py"]
+            )
+
+        # Función para manejar el resultado después de la selección de archivo
+        def on_file_saved(result):
+            if result.path:
+                try:
+                    with open(result.path, "w", encoding="utf-8") as f:
+                        f.write(self.generated_code)
+                    self.page.snack_bar = ft.SnackBar(
+                        content=ft.Text("✅ Código guardado exitosamente"),
+                        open=True,
+                        duration=2000
+                    )
+                    self.page.update()
+                except Exception as ex:
+                    self.page.snack_bar = ft.SnackBar(
+                        content=ft.Text(f"❌ Error al guardar archivo: {ex}"),
+                        open=True,
+                        duration=2000
+                    )
+                    self.page.update()
+
+        # Asignar el manejador de resultados
+        self.file_picker.on_result = on_file_saved
         
         save_button = ft.ElevatedButton(
             "Guardar como .py",
             on_click=save_to_file,
             icon=ft.icons.SAVE
         )
-        
+
         # Main container
         return ft.Container(
             content=ft.Column([

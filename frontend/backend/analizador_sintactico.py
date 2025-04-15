@@ -151,6 +151,7 @@ class Parser:
     def __init__(self, tokens):
         self.tokens = tokens
         self.current_token_index = 0
+        self.ast = None
     
     def eat(self, expected_type):
         """Verifica si el token actual es del tipo esperado y avanza al siguiente"""
@@ -868,11 +869,11 @@ class Parser:
     def parse(self):
         """Inicia el análisis sintáctico"""
         try:
-            ast = self.parse_instrucciones()
+            self.ast = self.parse_instrucciones()
 
-            print("AST Generado:", ast)
+            print("AST Generado:", self.ast)
             print("")
-            print(ast.hijos)
+            print(self.ast.hijos)
 
             # Comprobamos si hemos procesado todos los tokens
             if self.current_token_index < len(self.tokens):
@@ -880,9 +881,9 @@ class Parser:
 
             
             # Graficamos el árbol después de generarlo
-            ast.graficar_mpl()
+            self.ast.graficar_mpl()
 
-            return ast  # Retornar el árbol de sintaxis abstracta
+            return self.ast  # Retornar el árbol de sintaxis abstracta
 
         except SyntaxError as e:
             print(f"Error de sintaxis: {e}")

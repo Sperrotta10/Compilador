@@ -1,12 +1,12 @@
 import flet as ft
-from backend.generador_codigo import CodeGenerator
+from backend.generar_codigo2 import PythonCodeGenerator
 
 class CodFinal_page:
     def __init__(self, page, semantico_page):
         self.page = page
         self.semantico_page = semantico_page
         self.ast = semantico_page.ast if hasattr(semantico_page, 'ast') else None
-        self.code_generator = CodeGenerator()
+        self.code_generator = PythonCodeGenerator()  # Usamos el visitor
         self.generated_code = ""
         self.generate_code()
 
@@ -15,18 +15,26 @@ class CodFinal_page:
         self.page.overlay.append(self.file_picker)
 
     def generate_code(self):
-        """Generate Python code from the AST."""
+        """Generar código Python usando el visitor sobre el AST."""
         if self.ast:
-            self.generated_code = self.code_generator.generate(self.ast)
+            if isinstance(self.ast, list):
+                for nodo in self.ast:
+                    nodo.accept(self.code_generator)
+            else:
+                self.ast.accept(self.code_generator)
+            self.generated_code = self.code_generator.generate(None)  # Retorna el código generado
         else:
-            self.generated_code = "# No hay AST disponible para generar código.\n# Por favor, ejecute primero el análisis sintáctico y semántico."
+            self.generated_code = (
+                "# No hay AST disponible para generar código.\n"
+                "# Por favor, ejecute primero el análisis sintáctico y semántico."
+            )
 
     def buil_page(self):
-        """Build the code generation page UI."""
-        # Title
+        """Construir la interfaz de usuario para mostrar el código generado."""
+        # Título
         title = ft.Text("Generación de Código Python", size=24, weight=ft.FontWeight.BOLD, color="black")
         
-        # Code display
+        # Área de visualización del código
         code_display = ft.TextField(
             value=self.generated_code,
             multiline=True,
@@ -39,7 +47,7 @@ class CodFinal_page:
             color="black"
         )
 
-        # Copy button
+        # Botón para copiar
         def copy_to_clipboard(e):
             self.page.set_clipboard(self.generated_code)
             self.page.snack_bar = ft.SnackBar(
@@ -55,16 +63,15 @@ class CodFinal_page:
             icon=ft.icons.COPY
         )
 
-        # Save button usando FilePicker
+        # Botón para guardar
         def save_to_file(e):
-            # Llamamos al método para mostrar el cuadro de diálogo de guardar
             self.file_picker.save_file(
                 dialog_title="Guardar como archivo .py",
                 file_name="codigo_generado.py",
                 allowed_extensions=["py"]
             )
 
-        # Función para manejar el resultado después de la selección de archivo
+        # Manejador de guardado
         def on_file_saved(result):
             if result.path:
                 try:
@@ -84,7 +91,7 @@ class CodFinal_page:
                     )
                     self.page.update()
 
-        # Asignar el manejador de resultados
+        # Asignar manejador
         self.file_picker.on_result = on_file_saved
         
         save_button = ft.ElevatedButton(
@@ -93,7 +100,7 @@ class CodFinal_page:
             icon=ft.icons.SAVE
         )
 
-        # Main container
+        # Contenedor principal
         return ft.Container(
             content=ft.Column([
                 title,

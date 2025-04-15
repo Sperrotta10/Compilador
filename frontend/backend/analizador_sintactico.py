@@ -9,26 +9,20 @@ class ASTNode:
         self.hijos = hijos or []
 
     def __str__(self):
-        # Convertir el valor a una cadena legible
         valor_str = str(self.valor) if self.valor is not None else "None"
-        
-        # Convertir los hijos a una cadena legible
         if isinstance(self.hijos, list):
             hijos_str = ", ".join(self._convertir_hijo_a_str(hijo) for hijo in self.hijos)
         else:
             hijos_str = self._convertir_hijo_a_str(self.hijos)
-        
-        # Devolver la representación del nodo
         return f"{self.tipo}: {valor_str}, Hijos: [{hijos_str}]"
 
     def _convertir_hijo_a_str(self, hijo):
-        """Convierte un hijo a una cadena legible."""
         if isinstance(hijo, ASTNode):
-            return str(hijo)  # Llamada recursiva para nodos hijos
+            return str(hijo)
         elif isinstance(hijo, list):
             return ", ".join(self._convertir_hijo_a_str(item) for item in hijo)
         else:
-            return str(hijo)  # Convertir otros tipos a cadena
+            return str(hijo)
 
     def graficar(self, parent_id=None, node_count=0, nodes=[], edges=[], level=0):
         node_id = node_count
@@ -44,21 +38,17 @@ class ASTNode:
 
         for hijo in self.hijos:
             if isinstance(hijo, ASTNode):
-                # Si el hijo es un nodo AST, lo procesamos normalmente
                 node_count = hijo.graficar(parent_id=node_id, node_count=node_count, nodes=nodes, edges=edges, level=level + 1)
             elif isinstance(hijo, list):  
-                # Si el hijo es una lista, iteramos sobre sus elementos
                 for subhijo in hijo:
                     if isinstance(subhijo, ASTNode):
                         node_count = subhijo.graficar(parent_id=node_id, node_count=node_count, nodes=nodes, edges=edges, level=level + 1)
                     else:
-                        # Si el subhijo no es un nodo AST, lo agregamos como valor
                         valor_str = str(subhijo) if subhijo is not None else "None"
                         nodes.append((node_count, f"Valor: {valor_str}"))
                         edges.append((node_id, node_count))
                         node_count += 1
             else:
-                # Si el hijo es un valor primitivo (string, número, etc.), lo agregamos directamente
                 valor_str = str(hijo) if hijo is not None else "None"
                 nodes.append((node_count, f"Valor: {valor_str}"))
                 edges.append((node_id, node_count))
@@ -66,12 +56,8 @@ class ASTNode:
 
         return node_count
 
-
-
     def graficar_mpl(self, output_filename=None):
-
         if output_filename is None:
-            # Generar un nombre único utilizando el timestamp actual
             output_filename = f"arbol_sintactico_{int(time.time())}.png"
 
         nodes = []
@@ -79,30 +65,21 @@ class ASTNode:
         self.graficar(node_count=0, nodes=nodes, edges=edges)
 
         G = nx.DiGraph()
-
-        # Añadir los nodos
         for node_id, label in nodes:
             G.add_node(node_id, label=label)
-
-        # Añadir los bordes
         for start, end in edges:
             G.add_edge(start, end)
 
         pos = self.crear_layout_arbol(G, nodes, edges)
-
         labels = nx.get_node_attributes(G, 'label')
 
-        plt.figure(figsize=(20, 15))  # Aumentar el tamaño de la figura
-        nx.draw(G, pos, with_labels=True, labels=labels, node_size=2000, node_color='lightblue', font_size=7, font_weight='bold', arrows=True)  # Reducir el tamaño de los nodos y la fuente
-
+        plt.figure(figsize=(20, 15))
+        nx.draw(G, pos, with_labels=True, labels=labels, node_size=2000, node_color='lightblue', font_size=7, font_weight='bold', arrows=True)
         plt.title("Árbol Sintáctico Abstracto")
-        plt.tight_layout()  # Ajustar los límites del gráfico
-
-        # Guardar la imagen
+        plt.tight_layout()
         plt.savefig(output_filename, format="PNG")
         print(f"Árbol guardado como imagen: {output_filename}")
-        return output_filename  # Retornar el nombre del archivo generado
-
+        return output_filename
 
     def crear_layout_arbol(self, G, nodes, edges):
         pos = {}
@@ -114,16 +91,14 @@ class ASTNode:
             levels[level].append(node_id)
 
         max_level = max(levels.keys()) if levels else 0
-        vertical_spacing = 2  # Aumentar el espaciado vertical
-        horizontal_spacing = 4  # Aumentar el espaciado horizontal
+        vertical_spacing = 2
+        horizontal_spacing = 4
 
         for level in range(max_level + 1):
             if level not in levels:
                 continue
-
             level_width = len(levels[level]) * horizontal_spacing
-            x_start = -level_width / 2  # Centrar los nodos en el nivel
-
+            x_start = -level_width / 2
             for i, node_id in enumerate(levels[level]):
                 x = x_start + i * horizontal_spacing
                 y = -level * vertical_spacing
@@ -131,19 +106,26 @@ class ASTNode:
 
         return pos
 
-
     def obtener_nivel(self, node_id, edges):
         parent = self.obtener_padre(node_id, edges)
         if parent is None:
-            return 0  # Nodo raíz
+            return 0
         return self.obtener_nivel(parent, edges) + 1
 
     def obtener_padre(self, node_id, edges):
         for start, end in edges:
             if end == node_id:
                 return start
-        return None  # Es el nodo raíz
+        return None
 
+    # Método necesario para el patrón Visitor
+    def accept(self, visitor):
+        method_name = 'visit_' + self.tipo
+        visitor_method = getattr(visitor, method_name, None)
+        if visitor_method:
+            return visitor_method(self)
+        else:
+            raise NotImplementedError(f"No se encontró el método {method_name} en el visitor.")
 
 
 

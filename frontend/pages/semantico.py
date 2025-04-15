@@ -51,13 +51,6 @@ class Semantico_page:
             margin=ft.margin.only(top=20)
         )
         
-        # Button to proceed to code generation
-        next_button = ft.ElevatedButton(
-            "Continuar a Generación de Código",
-            on_click=lambda _: self.page.navigate_to("cod_final"),
-            disabled=len(self.errors) > 0
-        )
-        
         # Main container
         return ft.Container(
             content=ft.Column([
@@ -65,8 +58,7 @@ class Semantico_page:
                 status,
                 ft.Text("Resultados del análisis semántico:", size=16, weight=ft.FontWeight.BOLD, color="black"),
                 errors_container,
-                ft.Row([next_button], alignment=ft.MainAxisAlignment.CENTER)
             ]),
             padding=20,
-            width=800
+            width=800,
         )

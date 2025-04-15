@@ -46,20 +46,6 @@ class Header:
                             on_click=lambda e: self.navigate_to("semantico")
                         ),
                         ft.ElevatedButton(
-                            "Cod medio", 
-                            icon=ft.icons.CODE_OUTLINED, 
-                            bgcolor="#AAAAAA" if self.page.current_page == "cod_medio" else "#D9D9D9", 
-                            color="white" if self.page.current_page == "cod_medio" else "black", 
-                            on_click=lambda e: self.navigate_to("cod_medio")
-                        ),
-                        ft.ElevatedButton(
-                            "Optimizacion", 
-                            icon=ft.icons.SETTINGS, 
-                            bgcolor="#AAAAAA" if self.page.current_page == "optimizacion" else "#D9D9D9", 
-                            color="white" if self.page.current_page == "optimizacion" else "black", 
-                            on_click=lambda e: self.navigate_to("optimizacion")
-                        ),
-                        ft.ElevatedButton(
                             "Cod Final", 
                             icon=ft.icons.DONE_ALL, 
                             bgcolor="#AAAAAA" if self.page.current_page == "cod_final" else "#D9D9D9", 

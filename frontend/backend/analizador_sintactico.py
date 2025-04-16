@@ -157,16 +157,49 @@ class Parser:
 
         if token_type == "Identificador":
             izquierda = self.eat("Identificador")
+
+            # --- Posfijo: i++ o i-- ---
+            if self.current_token_index < len(self.tokens):
+                next_type, next_value, _, _ = self.tokens[self.current_token_index]
+                if next_type == "Operador de Incremento/Decremento" and next_value in ["++", "--"]:
+                    operador = self.eat("Operador de Incremento/Decremento")
+                    return ASTNode("ExpresionUnaria", operador + "_post", [ASTNode("Identificador", izquierda, [])])
+            
         elif token_type == "Número":
             izquierda = self.eat("Número")
         elif token_type == "String Literal":
             izquierda = self.eat("String Literal")
+
+            if self.current_token_index < len(self.tokens):
+                next_type, next_value, _, _ = self.tokens[self.current_token_index]
+                if next_type == "Operador Aritmético" and next_value == "+":
+                    operador = self.eat("Operador Aritmético")
+                    if self.tokens[self.current_token_index][0] in ["Identificador", "Número", "String Literal"]:
+                        derecha_token_type = self.tokens[self.current_token_index][0]
+                        derecha = self.eat(derecha_token_type)
+                        return ASTNode("Expresion", operador, [
+                            ASTNode("Operando", izquierda, []),
+                            ASTNode("Operando", derecha, [])
+                        ])
+                    else:
+                        raise SyntaxError("Se esperaba un identificador, número o string literal después de '+'")
+                    
         elif token_type == "Literal Booleano":
             izquierda = self.eat("Literal Booleano")
         elif token_type == "Literal Nulo":
             izquierda = self.eat("Literal Nulo")
         else:
             raise SyntaxError(f"Error en expresión: token inesperado '{token_type}'")
+        
+        
+        
+        # Soporte para ++Identificador o --Identificador (forma prefija)
+        if token_type == "Operador de Incremento/Decremento" and token_value in ["++", "--"]:
+            operador = self.eat("Operador de Incremento/Decremento")  # Consumimos ++ o --
+            if self.tokens[self.current_token_index][0] != "Identificador":
+                raise SyntaxError(f"Se esperaba un identificador después de '{operador}'")
+            identificador = self.eat("Identificador")
+            return ASTNode("ExpresionUnaria", operador, [ASTNode("Identificador", identificador, [])])
         
         # Manejo de asignación
         if self.current_token_index < len(self.tokens) and self.tokens[self.current_token_index][0] == "Operador de Asignación":
@@ -286,6 +319,13 @@ class Parser:
             
             if token_type == "Condicional" and token_value == "else":
                 self.eat("Condicional")  # Consumimos 'else'
+
+                # Chequeamos si lo que sigue es un 'if'
+                if self.current_token_index < len(self.tokens):
+                    next_token_type, next_token_value, _, _ = self.tokens[self.current_token_index]
+                    if next_token_type == "Condicional" and next_token_value == "if":
+                        else_if_node = self.parse_sentencia_if()
+                        return ASTNode("IfElse", expresion, [instrucciones, else_if_node])
                 
                 # Verificamos el delimitador de apertura de bloque '{'
                 if self.tokens[self.current_token_index][0] != "Delimitador" or self.tokens[self.current_token_index][1] != "{":
@@ -300,10 +340,6 @@ class Parser:
                 self.eat("Delimitador")  # Consumimos '}'
                 
                 return ASTNode("IfElse", expresion, [instrucciones, instrucciones_else])
-
-            # Opcional: Verificamos el caso de 'else if'
-            elif token_type == "Condicional" and token_value == "else if":
-                return self.parse_sentencia_if()  # Recurre y analiza el 'else if' como un nuevo 'if'
         
         return ASTNode("If", None, [expresion, instrucciones])
 
@@ -408,7 +444,7 @@ class Parser:
     
     def parse_sentencia_for(self):
         """Regla para una sentencia for: for (inicialización; condición; actualización) { ... }"""
-        
+
         # Verificar la palabra clave 'for'
         if self.current_token_index >= len(self.tokens):
             raise SyntaxError("Se esperaba 'for', pero no hay más tokens.")
@@ -423,13 +459,12 @@ class Parser:
             raise SyntaxError("Se esperaba '(' después de 'for'.")
         self.eat("Delimitador")  # Consumir '('
 
-        # Inicialización (puede ser una declaración de variable o una expresión)
-        inicializacion = self.parse_expresion()
+        # Inicialización (declaración o expresión)
+        if self.tokens[self.current_token_index][0] == "Tipo de dato":
+            inicializacion = self.parse_declaracion_variable()
+        else:
+            inicializacion = self.parse_expresion()
 
-        # Verificar el delimitador ';'
-        if self.tokens[self.current_token_index][0] != "Delimitador" or self.tokens[self.current_token_index][1] != ";":
-            raise SyntaxError("Se esperaba ';' después de la inicialización.")
-        self.eat("Delimitador")  # Consumir ';'
 
         # Condición
         condicion = self.parse_expresion()
@@ -462,6 +497,7 @@ class Parser:
 
         # Crear el nodo para el bucle for
         return ASTNode("For", None, [inicializacion, condicion, actualizacion, instrucciones])
+
     
 
     def parse_declaracion_funcion(self, modificadores=None):
@@ -797,20 +833,18 @@ class Parser:
             self.eat("Delimitador")  # Consumir '('
             
             # Procesar argumentos
-            argumentos = []
+            expr = self.parse_expresion()
+            argumentos = [expr]
 
-            # Verifica si el siguiente token puede iniciar una expresión válida
-            if self.tokens[self.current_token_index][0] in ["Identificador", "Número", "String Literal", "Literal Booleano", "Literal Nulo"]:
-                expr = self.parse_expresion()
-                argumentos.append(expr)
-            else:
-                raise SyntaxError("Se esperaba una expresión válida dentro de System.out.print/println")
-
-            
             # Verificar el punto y coma
-            if self.tokens[self.current_token_index][0] != "Delimitador" or self.tokens[self.current_token_index][1] != ";":
+            if self.tokens[self.current_token_index][0] == "Delimitador" or self.tokens[self.current_token_index][1] != ";":
+                if self.tokens[self.current_token_index][1] == ';':
+                    self.eat("Delimitador")  # Consumir ';'
+                elif self.tokens[self.current_token_index][1] == ')':
+                    self.eat("Delimitador")  # Consumir ')'
+                    self.eat("Delimitador")  # Consumir ';'
+            else:
                 raise SyntaxError("Se esperaba ';' al final de la sentencia print.")
-            self.eat("Delimitador")  # Consumir ';'
             
             # Crear el nodo para la sentencia print
             return ASTNode("Print", tipo_print, argumentos)

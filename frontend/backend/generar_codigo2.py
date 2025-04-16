@@ -512,6 +512,7 @@ class PythonCodeGenerator:
         else:
             newline = True  # Por seguridad
 
+        # Verificar si hay concatenación de strings con otros tipos
         contenido = []
         for arg in argumentos:
             if isinstance(arg, ASTNode):
@@ -519,7 +520,32 @@ class PythonCodeGenerator:
             else:
                 contenido.append(str(arg))
 
-        joined_content = " + ".join(contenido)
+        # Si hay operaciones de concatenación con +, convertimos a formato de print con comas
+        # para evitar errores de tipo en Python
+        if any("+" in c for c in contenido):
+            # Intentamos detectar concatenaciones de string con variables
+            # y las convertimos a formato de print con comas
+            new_content = []
+            for item in contenido:
+                if "+" in item and not (item.startswith('"') and item.endswith('"')):
+                    # Dividir por + y procesar cada parte
+                    parts = item.replace("(", "").replace(")", "").split("+")
+                    for i, part in enumerate(parts):
+                        part = part.strip()
+                        if part.startswith('"') and part.endswith('"'):
+                            # Es un string literal
+                            new_content.append(part)
+                        else:
+                            # Es una variable o expresión
+                            new_content.append(part)
+                else:
+                    new_content.append(item)
+            
+            # Usar comas para separar los argumentos en print
+            joined_content = ", ".join(new_content)
+        else:
+            # No hay concatenación con +, usamos el formato original
+            joined_content = " + ".join(contenido)
 
         if newline:
             self._add_line(f"print({joined_content})")
@@ -528,7 +554,6 @@ class PythonCodeGenerator:
 
     def visit_Break(self, node):
         self._add_line("break")
-
 
     def visit_Switch(self, node):
         """Visita una sentencia switch."""
@@ -560,20 +585,20 @@ class PythonCodeGenerator:
                 child.hijos[0].accept(self)  # Instrucciones del default
                 self.indent_level -= 1
 
+    def visit_ExpresionUnaria(self, node):
+        operador = node.valor  # operador++_post o ++, --, etc.
+        hijo = node.hijos[0].accept(self)  # Genera el código del operando
 
-    def _generate_expression(self, node):
-        if node.tipo in ["Identificador", "Operando", "Valor"]:
-            return str(node.valor)
-        elif node.tipo == "Expresion":
-            if len(node.hijos) >= 2:
-                izquierda = self._generate_expression(node.hijos[0])
-                derecha = self._generate_expression(node.hijos[1])
-                operador = self.java_to_python_operators.get(node.valor, node.valor)
-                return f"({izquierda} {operador} {derecha})"
-            else:
-                return str(node.valor)
-        return str(node.valor) if node.valor else ""
-
+        if operador == "++":
+            return f"{hijo} = {hijo} + 1"
+        elif operador == "--":
+            return f"{hijo} = {hijo} - 1"
+        elif operador == "++_post":
+            return f"{hijo}++;"
+        elif operador == "--_post":
+            return f"{hijo}--;"
+        else:
+            raise Exception(f"Operador unario desconocido: {operador}")
 
     # Método genérico para manejar cualquier tipo de nodo no reconocido
     def visit_ASTNode(self, node):

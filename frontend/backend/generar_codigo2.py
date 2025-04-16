@@ -500,6 +500,81 @@ class PythonCodeGenerator:
         # Similar a los identificadores, normalmente se manejan dentro de expresiones
         pass
 
+    def visit_Print(self, node):
+        """Visita una sentencia System.out.println o System.out.print."""
+        tipo = node.valor  # 'System.out.println' o 'System.out.print'
+        argumentos = node.hijos
+
+        if tipo == "System.out.println":
+            newline = True
+        elif tipo == "System.out.print":
+            newline = False
+        else:
+            newline = True  # Por seguridad
+
+        contenido = []
+        for arg in argumentos:
+            if isinstance(arg, ASTNode):
+                contenido.append(self._generate_expression(arg))
+            else:
+                contenido.append(str(arg))
+
+        joined_content = " + ".join(contenido)
+
+        if newline:
+            self._add_line(f"print({joined_content})")
+        else:
+            self._add_line(f"print({joined_content}, end='')")
+
+    def visit_Break(self, node):
+        self._add_line("break")
+
+
+    def visit_Switch(self, node):
+        """Visita una sentencia switch."""
+        expresion = node.hijos[0]
+        self._add_line("# Simulación de switch con if-elif-else en Python")
+
+        expr_str = self._generate_expression(expresion)
+
+        first_case = True
+        for child in node.hijos[1:]:
+            if child.tipo == "Case":
+                valor = child.hijos[0]
+                instrucciones = child.hijos[1]
+
+                valor_str = self._generate_expression(valor)
+                if first_case:
+                    self._add_line(f"if {expr_str} == {valor_str}:")
+                    first_case = False
+                else:
+                    self._add_line(f"elif {expr_str} == {valor_str}:")
+
+                self.indent_level += 1
+                instrucciones.accept(self)
+                self.indent_level -= 1
+
+            elif child.tipo == "Default":
+                self._add_line("else:")
+                self.indent_level += 1
+                child.hijos[0].accept(self)  # Instrucciones del default
+                self.indent_level -= 1
+
+
+    def _generate_expression(self, node):
+        if node.tipo in ["Identificador", "Operando", "Valor"]:
+            return str(node.valor)
+        elif node.tipo == "Expresion":
+            if len(node.hijos) >= 2:
+                izquierda = self._generate_expression(node.hijos[0])
+                derecha = self._generate_expression(node.hijos[1])
+                operador = self.java_to_python_operators.get(node.valor, node.valor)
+                return f"({izquierda} {operador} {derecha})"
+            else:
+                return str(node.valor)
+        return str(node.valor) if node.valor else ""
+
+
     # Método genérico para manejar cualquier tipo de nodo no reconocido
     def visit_ASTNode(self, node):
         """Método genérico para visitar un nodo AST no reconocido."""

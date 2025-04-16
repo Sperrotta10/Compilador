@@ -21,7 +21,7 @@ TOKEN_PATTERNS = [
     ("Operador Relacional", r"(==|!=|<|>|<=|>=)"),
     ("Operador de Incremento/Decremento", r"(\+\+|--)"),
     ("Operador de Bits", r"(&|\||\^|~|<<|>>|>>>)"),
-    ("Delimitador", r"[;{}(),]"),
+    ("Delimitador", r"[;{}(),:]"),
     ("Corchete Abierto", r"\["),
     ("Corchete Cerrado", r"\]"),
     ("Salto de Linea", r"\n"),

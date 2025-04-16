@@ -159,6 +159,12 @@ class Parser:
             izquierda = self.eat("Identificador")
         elif token_type == "Número":
             izquierda = self.eat("Número")
+        elif token_type == "String Literal":
+            izquierda = self.eat("String Literal")
+        elif token_type == "Literal Booleano":
+            izquierda = self.eat("Literal Booleano")
+        elif token_type == "Literal Nulo":
+            izquierda = self.eat("Literal Nulo")
         else:
             raise SyntaxError(f"Error en expresión: token inesperado '{token_type}'")
         
@@ -621,11 +627,6 @@ class Parser:
         # Expresión del switch
         expresion = self.parse_expresion()
 
-        # Verificar el delimitador ')'
-        if self.tokens[self.current_token_index][0] != "Delimitador" or self.tokens[self.current_token_index][1] != ")":
-            raise SyntaxError("Se esperaba ')' después de la expresión.")
-        self.eat("Delimitador")  # Consumir ')'
-
         # Verificar el delimitador de apertura del bloque '{'
         if self.tokens[self.current_token_index][0] != "Delimitador" or self.tokens[self.current_token_index][1] != "{":
             raise SyntaxError("Se esperaba '{' después de 'switch'.")
@@ -645,21 +646,11 @@ class Parser:
                 # Valor del caso
                 valor = self.parse_expresion()
 
-                # Verificar el delimitador ':'
-                if self.tokens[self.current_token_index][0] != "Delimitador" or self.tokens[self.current_token_index][1] != ":":
-                    raise SyntaxError("Se esperaba ':' después del valor del caso.")
-                self.eat("Delimitador")  # Consumir ':'
-
                 # Instrucciones del caso
                 instrucciones = self.parse_instrucciones()
 
-                # Verificar la palabra clave 'break'
-                if self.tokens[self.current_token_index][0] == "Palabra Reservada" and self.tokens[self.current_token_index][1] == "break":
-                    self.eat("Palabra Reservada")  # Consumir 'break'
-                    self.eat("Delimitador")  # Consumir ';'
-
                 # Agregar el caso a la lista
-                casos.append((valor, instrucciones))
+                casos.append(ASTNode("Case", None, [valor, instrucciones]))
             
             # Verificar si es el caso por defecto
             elif token_type == "Palabra Reservada" and token_value == "default":
@@ -685,9 +676,22 @@ class Parser:
             raise SyntaxError("Se esperaba '}' al final del bloque 'switch'.")
         self.eat("Delimitador")  # Consumir '}'
 
+        if default_case:
+            default_case = ASTNode("Default", None, [default_case])
+
+
         # Crear el nodo para la sentencia switch
-        return ASTNode("Switch", None, [expresion, casos, default_case])
+        return ASTNode("Switch", None, [expresion] + casos + ([default_case] if default_case else []))
     
+    
+    def parse_sentencia_break(self):
+        """Regla para una sentencia break;"""
+        self.eat("Palabra Reservada")  # Consumir 'break'
+        if self.tokens[self.current_token_index][0] != "Delimitador" or self.tokens[self.current_token_index][1] != ";":
+            raise SyntaxError("Se esperaba ';' después de 'break'.")
+        self.eat("Delimitador")  # Consumir ';'
+        return ASTNode("Break", "break", [])
+
 
     def parse_declaracion_clase(self, modificadores=None):
         """Regla para una declaración de clase: [modificadores] class NombreClase { ... }"""
@@ -774,6 +778,46 @@ class Parser:
         
         return modificadores
 
+    def parse_sentencia_print(self):
+        """Regla para una sentencia System.out.println o System.out.print: System.out.println(expresión);"""
+        
+        # Verificar si es una sentencia de impresión
+        if self.current_token_index >= len(self.tokens):
+            raise SyntaxError("Se esperaba una sentencia de impresión, pero no hay más tokens.")
+        
+        token_type, token_value, _, _ = self.tokens[self.current_token_index]
+        
+        # Verificar si es un token de impresión específico
+        if token_type == "Imprimir":
+            tipo_print = self.eat("Imprimir")
+            
+            # Verificar el paréntesis de apertura
+            if self.tokens[self.current_token_index][0] != "Delimitador" or self.tokens[self.current_token_index][1] != "(":
+                raise SyntaxError("Se esperaba '(' después de la sentencia de impresión.")
+            self.eat("Delimitador")  # Consumir '('
+            
+            # Procesar argumentos
+            argumentos = []
+
+            # Verifica si el siguiente token puede iniciar una expresión válida
+            if self.tokens[self.current_token_index][0] in ["Identificador", "Número", "String Literal", "Literal Booleano", "Literal Nulo"]:
+                expr = self.parse_expresion()
+                argumentos.append(expr)
+            else:
+                raise SyntaxError("Se esperaba una expresión válida dentro de System.out.print/println")
+
+            
+            # Verificar el punto y coma
+            if self.tokens[self.current_token_index][0] != "Delimitador" or self.tokens[self.current_token_index][1] != ";":
+                raise SyntaxError("Se esperaba ';' al final de la sentencia print.")
+            self.eat("Delimitador")  # Consumir ';'
+            
+            # Crear el nodo para la sentencia print
+            return ASTNode("Print", tipo_print, argumentos)
+        
+        else:
+            raise SyntaxError(f"Se esperaba una sentencia de impresión, pero se encontró '{token_value}'.")
+
 
     def parse_instrucciones(self):
         """Analiza las instrucciones dentro de un bloque."""
@@ -781,9 +825,9 @@ class Parser:
         while self.current_token_index < len(self.tokens):
             token_type, token_value, _, _ = self.tokens[self.current_token_index]
             
-            # Verifica si es el cierre de bloque
-            if token_type == "Delimitador" and token_value == "}":
-                break  # Detiene el bucle si encuentra un '}'
+             # 🚨 Detener cuando aparezca el siguiente case, default o cierre de bloque
+            if (token_type == "Palabra Reservada" and token_value in ["case", "default"]) or (token_type == "Delimitador" and token_value == "}"):
+                break
             
             # Recolectar modificadores (public, private, protected, static, etc.)
             modificadores = self.parse_modificadores()
@@ -830,18 +874,25 @@ class Parser:
                 elif token_type == "Palabra Reservada" and token_value == "switch":
                     instrucciones.append(self.parse_sentencia_switch())  # Sentencia switch
                 
-                # 10. Expresión o asignación
+                elif token_type == "Palabra Reservada" and token_value == "break":
+                    instrucciones.append(self.parse_sentencia_break())
+                
+                # 10. Sentencia de impresión (System.out.print/println o token Imprimir)
+                elif token_type == "Imprimir" or (token_type == "Identificador" and token_value == "System"):
+                    instrucciones.append(self.parse_sentencia_print())  # Sentencia print
+                
+                # 11. Expresión o asignación
                 elif token_type == "Identificador":
                     if self.current_token_index + 1 < len(self.tokens) and self.tokens[self.current_token_index + 1][0] == "Operador de Asignación":
                         instrucciones.append(self.parse_expresion())  # Asignación
                     else:
                         instrucciones.append(self.parse_expresion())  # Expresión
                 
-                # 11. Delimitador (punto y coma)
+                # 12. Delimitador (punto y coma)
                 elif token_type == "Delimitador" and token_value == ";":
                     self.eat("Delimitador")  # Consumir ';' (instrucción vacía)
                 
-                # 12. Token inesperado
+                # 13. Token inesperado
                 else:
                     raise SyntaxError(f"Token inesperado '{token_type}: {token_value}'")
         

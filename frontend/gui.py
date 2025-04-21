@@ -5,6 +5,7 @@ from pages.sintactico import Sintactico_page
 from pages.semantico import Semantico_page
 from pages.cod_final import CodFinal_page
 from Components.header import Header
+from Components.footer import Footer
 
 def main(page: ft.Page):
     page.title = "JavThon - Compilador"
@@ -82,7 +83,8 @@ def main(page: ft.Page):
         page.add(
             Header(page, navigate_to).header_componet(), 
             ft.Divider(thickness=1, color="black"),
-            build_page_content(page_name, page)
+            build_page_content(page_name, page),
+            Footer(page).footer_component()
         )
         page.update()
     
@@ -95,7 +97,8 @@ def main(page: ft.Page):
         page.add(
             Header(page, navigate_to).header_componet(),
             ft.Divider(thickness=1, color="black"),
-            build_page_content(page.current_page, page)
+            build_page_content(page.current_page, page),
+            Footer(page).footer_component()
         )
         page.update()
 
